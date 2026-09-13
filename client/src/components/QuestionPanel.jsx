@@ -2,7 +2,16 @@ import { useEffect, useState } from 'react';
 import { submitAnswer } from '../services/api.js';
 import Icon from './Icon.jsx';
 
-export default function QuestionPanel({ question, result, onResult }) {
+export default function QuestionPanel({
+  question,
+  result,
+  onResult,
+  onPrevious,
+  onNext,
+  hasPrevious,
+  hasNext,
+  positionLabel,
+}) {
   const [selectedChoice, setSelectedChoice] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -84,11 +93,21 @@ export default function QuestionPanel({ question, result, onResult }) {
         {error && <p className="error-message" role="alert">{error}</p>}
 
         <div className="submit-row">
-          <p>{result ? '문제 목록에서 다른 문제를 선택해 보세요.' : '답을 고른 뒤 제출하면 바로 확인할 수 있어요.'}</p>
-          <button className="submit-button" disabled={selectedChoice === null || isSubmitting || Boolean(result)} type="submit">
-            {isSubmitting ? '채점 중…' : result ? '제출 완료' : '답안 제출'}
-            {!result && <Icon name="arrow" size={18} />}
-          </button>
+          <p>{positionLabel} · {result ? '다음 문제로 이동할 수 있어요.' : '답을 고른 뒤 제출하면 바로 확인할 수 있어요.'}</p>
+          <div className="action-group">
+            <button className="nav-button" disabled={!hasPrevious} onClick={onPrevious} type="button">
+              <Icon name="back" size={17} />
+              이전
+            </button>
+            <button className="submit-button" disabled={selectedChoice === null || isSubmitting || Boolean(result)} type="submit">
+              {isSubmitting ? '채점 중…' : result ? '제출 완료' : '답안 제출'}
+              {!result && <Icon name="arrow" size={18} />}
+            </button>
+            <button className="nav-button" disabled={!hasNext} onClick={onNext} type="button">
+              다음
+              <Icon name="arrow" size={17} />
+            </button>
+          </div>
         </div>
       </form>
     </article>

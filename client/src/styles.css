@@ -62,6 +62,14 @@ button, label { -webkit-tap-highlight-color: transparent; }
 .progress-copy strong { color: var(--ink); font-family: "DM Sans", sans-serif; }
 .progress-track { height: 6px; overflow: hidden; border-radius: 99px; background: #e4e7e1; }
 .progress-track span { display: block; height: 100%; border-radius: inherit; background: var(--green); transition: width .35s ease; }
+.score-summary { margin: 10px 0 0; color: var(--muted); font-size: 12px; text-align: right; }
+
+.set-selector { display: flex; flex-wrap: wrap; gap: 10px; margin: -14px 0 24px; }
+.set-chip { display: flex; align-items: center; gap: 9px; padding: 10px 13px; border: 1px solid var(--line); border-radius: 10px; color: var(--ink); background: rgba(255, 255, 255, .86); cursor: pointer; transition: border-color .15s ease, background .15s ease, transform .15s ease; }
+.set-chip:hover { border-color: #aab5ad; transform: translateY(-1px); }
+.set-chip.active { border-color: rgba(23, 92, 75, .35); background: var(--green-soft); }
+.set-chip strong { font-size: 13px; }
+.set-chip span { color: var(--muted); font-size: 12px; }
 
 .workspace { display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 20px; align-items: start; }
 .question-list, .question-panel { border: 1px solid var(--line); background: rgba(255, 255, 255, .92); box-shadow: 0 14px 42px rgba(34, 48, 43, .06); }
@@ -109,9 +117,17 @@ button, label { -webkit-tap-highlight-color: transparent; }
 .error-message { margin: 18px 0 0; color: #b24336; font-size: 13px; }
 .submit-row { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-top: 30px; padding-top: 24px; border-top: 1px solid var(--line); }
 .submit-row p { margin: 0; color: var(--muted); font-size: 12px; }
+.action-group { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 9px; }
 .submit-button { min-width: 138px; display: flex; justify-content: center; align-items: center; gap: 9px; padding: 13px 18px; border: 0; border-radius: 12px; color: white; background: var(--green); font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 8px 18px rgba(23, 92, 75, .18); transition: transform .15s ease, opacity .15s ease; }
 .submit-button:hover:not(:disabled) { transform: translateY(-1px); }
-.submit-button:disabled { opacity: .38; cursor: not-allowed; box-shadow: none; }
+.nav-button { min-width: 82px; display: flex; justify-content: center; align-items: center; gap: 7px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; color: var(--ink); background: #fff; font-size: 13px; font-weight: 700; cursor: pointer; transition: border-color .15s ease, opacity .15s ease, transform .15s ease; }
+.nav-button:hover:not(:disabled) { border-color: #9aa99f; transform: translateY(-1px); }
+.submit-button:disabled, .nav-button:disabled { opacity: .38; cursor: not-allowed; box-shadow: none; }
+
+.complete-card { display: flex; align-items: center; gap: 14px; margin-top: 20px; padding: 18px 20px; border: 1px solid #c8e2d5; border-radius: 16px; color: #155f48; background: #edf8f2; }
+.complete-card svg { width: 38px; height: 38px; padding: 8px; border-radius: 12px; background: rgba(255, 255, 255, .78); }
+.complete-card strong { font-size: 15px; }
+.complete-card p { margin: 4px 0 0; font-size: 13px; }
 
 .state-card { min-height: 280px; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 30px; border: 1px solid var(--line); border-radius: 22px; background: white; color: var(--muted); }
 .state-card.error-state { flex-direction: column; color: #a54838; }
@@ -127,6 +143,7 @@ footer { display: flex; align-items: center; justify-content: center; gap: 7px; 
   .main-content { width: min(100% - 32px, 680px); padding-top: 38px; }
   .intro { align-items: start; flex-direction: column; gap: 24px; }
   .progress-summary { width: 100%; }
+  .score-summary { text-align: left; }
   .workspace { grid-template-columns: 1fr; }
   .question-list { position: static; overflow-x: auto; }
   .list-heading { display: none; }
@@ -145,5 +162,6 @@ footer { display: flex; align-items: center; justify-content: center; gap: 7px; 
   .question-header h2 { font-size: 21px; }
   .choice { align-items: flex-start; }
   .submit-row { align-items: stretch; flex-direction: column; }
-  .submit-button { width: 100%; }
+  .action-group { display: grid; grid-template-columns: 1fr; }
+  .submit-button, .nav-button { width: 100%; }
 }

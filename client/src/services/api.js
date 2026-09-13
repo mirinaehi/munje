@@ -23,6 +23,16 @@ export async function getQuestions() {
   return parseResponse(response);
 }
 
+export async function getQuestionSets() {
+  const response = await fetch('/api/question-sets');
+  return parseResponse(response);
+}
+
+export async function getQuestionSet(questionSetId) {
+  const response = await fetch(`/api/question-sets/${questionSetId}`);
+  return parseResponse(response);
+}
+
 export async function submitAnswer(questionId, answer) {
   const response = await fetch(`/api/questions/${questionId}/check`, {
     method: 'POST',

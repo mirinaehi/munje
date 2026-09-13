@@ -1,1 +1,10 @@
-[]
+[
+  {
+    "id": "set-js-object-basics",
+    "title": "JavaScript 객체와 배열 기초",
+    "description": "USER_PROFILES 예제로 객체 속성 접근과 Object.values의 동작을 확인합니다.",
+    "questions": ["q016", "q017", "q018"],
+    "isPublished": true,
+    "createdBy": "teacher001"
+  }
+]

@@ -2,7 +2,7 @@ export default function QuestionList({ questions, selectedId, onSelect, results 
   return (
     <aside className="question-list" aria-label="문제 목록">
       <div className="list-heading">
-        <span>문제 목록</span>
+        <span>세트 문제</span>
         <strong>{questions.length}</strong>
       </div>
       <div className="list-items">

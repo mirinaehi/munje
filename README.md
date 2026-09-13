@@ -33,7 +33,7 @@
 
 ### 1.5 현재 개발 상태
 
-* 2단계 — 객관식 문제 완료
+* 3단계 — 문제 세트 완료
 
 ---
 
@@ -1019,6 +1019,8 @@ npm run dev
 * 연결 확인: `GET /api/health`
 * 문제 목록: `GET /api/questions`
 * 객관식 채점: `POST /api/questions/:id/check`
+* 문제 세트 목록: `GET /api/question-sets`
+* 문제 세트 상세: `GET /api/question-sets/:id`
 
 ---
 
