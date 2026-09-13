@@ -1,5 +1,10 @@
 {
   "installCommand": "npm install",
-  "buildCommand": "npm run build --workspace client",
-  "outputDirectory": "client/dist"
+  "buildCommand": "echo \"No build step required for API deployment\"",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/api/$1"
+    }
+  ]
 }
