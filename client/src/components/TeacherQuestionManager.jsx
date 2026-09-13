@@ -28,6 +28,61 @@ const numericChoiceMap = new Map([
   ['5', 4],
 ]);
 
+const bulkImportExample = `Ⅵ. 동시 실행에서 발생하는 현상
+
+23. 다음 상황에서 발생한 현상의 이름은?
+- 트랜잭션 A가 잔액을 50,000원에서 40,000원으로 변경했다.
+- 아직 COMMIT하지 않았다.
+- 트랜잭션 B가 그 40,000원을 읽었다.
+- 이후 A가 ROLLBACK했다.
+
+① Phantom Read
+② Non-repeatable Read
+③ Dirty Read
+④ Deadlock
+⑤ Lost Connection
+
+24. 트랜잭션 B가 같은 계좌를 처음에는 50,000원으로 읽었다. 그 사이 A가 40,000원으로 변경하고 COMMIT했다. B가 같은 트랜잭션에서 다시 조회했더니 40,000원으로 읽었다. 이 현상은?
+
+① Dirty Read
+② Non-repeatable Read
+③ Phantom Read
+④ Durability
+⑤ Atomicity
+
+정답 및 해설
+
+번호 정답 해설
+23 ③ 다른 트랜잭션이 아직 COMMIT하지 않은 값을 읽은 것이므로 Dirty Read입니다.
+24 ② 같은 행을 같은 트랜잭션에서 다시 읽었는데 값이 달라진 현상이므로 Non-repeatable Read입니다.`;
+
+const sqlImportExample = `Ⅰ. SELECT와 WHERE
+
+1. 도서 테이블에서 가격이 15,000원 이상인 책의 제목과 가격을 조회하는 SQL을 작성하시오.
+결과로 나와야 하는 속성
+제목
+가격
+
+2. 도서 테이블에서 분류가 '소설', '과학', '역사' 중 하나인 책을 조회하시오.
+단, IN을 사용한다.
+결과로 나와야 하는 속성
+도서번호
+제목
+분류
+가격
+
+정답
+
+1.
+SELECT 제목, 가격
+FROM 도서
+WHERE 가격 >= 15000;
+
+2.
+SELECT 도서번호, 제목, 분류, 가격
+FROM 도서
+WHERE 분류 IN ('소설', '과학', '역사');`;
+
 function toFormQuestion(question) {
   return {
     type: question.type ?? 'multiple-choice',
@@ -70,8 +125,10 @@ function toPayload(formQuestion) {
 
 function cleanBulkText(text) {
   return text
+    .replace(/&#x20;|&nbsp;/g, ' ')
     .replace(/```[a-z]*\n?/gi, '')
     .replace(/```/g, '')
+    .replace(/\\\n/g, '\n')
     .replace(/\r\n/g, '\n')
     .trim();
 }
@@ -127,7 +184,9 @@ function parseAnswerMap(source) {
 
   for (const line of answerPart.split('\n')) {
     const trimmedLine = line.trim();
-    const match = trimmedLine.match(/^(\d{1,3})\s+([①②③④⑤1-5])\s+(.+)$/);
+    const tableMatch = trimmedLine.match(/^\|\s*(\d{1,3})\s*\|\s*([①②③④⑤1-5])\s*\|\s*(.*?)\s*\|?$/);
+    const plainMatch = trimmedLine.match(/^(\d{1,3})\s+([①②③④⑤1-5])\s+(.+)$/);
+    const match = tableMatch ?? plainMatch;
 
     if (!match) continue;
 
@@ -164,7 +223,7 @@ function parseBulkQuestions(text) {
   const source = cleanBulkText(text);
   const [questionPart] = splitQuestionAndAnswerParts(source);
   const answerMap = parseAnswerMap(source);
-  const questionPattern = /(^|\n)(\d{1,3})\.\s*([^\n]*)/g;
+  const questionPattern = /(^|\n)\s*#{0,6}\s*(\d{1,3})\.\s*([^\n]*)/g;
   const matches = [...questionPart.matchAll(questionPattern)];
 
   return matches.map((match, index) => {
@@ -174,7 +233,7 @@ function parseBulkQuestions(text) {
     const block = questionPart.slice(start, end).trim();
     const blockLines = block.split('\n').map((line) => line.trim()).filter(Boolean);
     const questionNumber = Number(match[2]);
-    const rawTitle = blockLines[0].replace(/^\d{1,3}\.\s*/, '').trim();
+    const rawTitle = blockLines[0].replace(/^\s*#{0,6}\s*\d{1,3}\.\s*/, '').trim();
     const choices = [];
     const contentLines = [];
 
@@ -182,9 +241,9 @@ function parseBulkQuestions(text) {
       const choiceMark = line[0];
 
       if (circledChoiceMap.has(choiceMark)) {
-        choices.push(line.slice(1).trim().replace(/\s+/g, ' '));
+        choices.push(line.slice(1).trim().replace(/\\$/g, '').replace(/\s+/g, ' '));
       } else if (!line.startsWith('선택지')) {
-        contentLines.push(line);
+        contentLines.push(line.replace(/^-\s*/, '').replace(/`/g, '').trim());
       }
     }
     const content = contentLines.join('\n').trim() || rawTitle;
@@ -326,6 +385,27 @@ export default function TeacherQuestionManager({
             </button>
           </div>
         </div>
+        <details className="bulk-guide">
+          <summary>붙여넣기 형식 보기</summary>
+          <div className="bulk-guide-grid">
+            <article>
+              <div className="bulk-guide-heading">
+                <strong>객관식</strong>
+                <button className="nav-button mini-button" onClick={() => setBulkText(bulkImportExample)} type="button">예시 넣기</button>
+              </div>
+              <p>문제 번호, ①②③ 보기, 정답 및 해설 표를 함께 붙여넣으면 정답 번호와 해설이 자동으로 연결됩니다.</p>
+              <pre>{bulkImportExample}</pre>
+            </article>
+            <article>
+              <div className="bulk-guide-heading">
+                <strong>SQL / 주관식</strong>
+                <button className="nav-button mini-button" onClick={() => setBulkText(sqlImportExample)} type="button">예시 넣기</button>
+              </div>
+              <p>보기가 없는 문제는 정답 섹션을 기준으로 SQL 또는 주관식 문제로 변환됩니다.</p>
+              <pre>{sqlImportExample}</pre>
+            </article>
+          </div>
+        </details>
         <label className="answer-field">
           <span>원문</span>
           <textarea
