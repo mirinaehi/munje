@@ -6,6 +6,11 @@ import test from 'node:test';
 import { getQuestionSet, getQuestionSets } from './questionSetService.js';
 import { isCorrectAnswer, toPublicQuestion } from './questionService.js';
 import { createSubmission } from './submissionService.js';
+import { getAssignedQuestionSetIds } from './assignmentService.js';
+import {
+  getTeacherAssignments,
+  updateTeacherAssignment,
+} from './teacherAssignmentService.js';
 import {
   createTeacherQuestionSet,
   deleteTeacherQuestionSet,
@@ -101,6 +106,15 @@ test('공개된 문제 세트 목록을 요약해서 제공한다', async () => 
   assert.equal(questionSets.length, 3);
   assert.equal(questionSets[0].id, 'set-js-object-basics');
   assert.equal(questionSets[0].questionCount, 5);
+});
+
+test('학생에게 배정된 문제 세트만 제공한다', async () => {
+  const questionSets = await getQuestionSets('student-minseo');
+
+  assert.deepEqual(
+    questionSets.map((questionSet) => questionSet.id),
+    ['set-js-object-basics', 'set-sql-select-basics', 'set-learning-flow'],
+  );
 });
 
 test('문제 세트의 문제를 지정된 순서대로 제공한다', async () => {
@@ -265,6 +279,31 @@ test('학생은 문제 세트를 관리할 수 없다', async () => {
     description: '학생은 만들 수 없습니다.',
     questions: ['q016'],
   });
+
+  assert.equal(result.error.status, 403);
+});
+
+test('교사는 학생에게 문제 세트를 배정할 수 있다', async () => {
+  const temporaryDirectory = await mkdtemp(path.join(os.tmpdir(), 'munje-assignments-'));
+  const assignmentsPath = path.join(temporaryDirectory, 'assignments.json');
+  process.env.MUNJE_ASSIGNMENTS_PATH = assignmentsPath;
+  await writeFile(assignmentsPath, '[]\n');
+
+  const listed = await getTeacherAssignments('teacher-hyun');
+  const updated = await updateTeacherAssignment('teacher-hyun', 'student-minseo', ['set-js-object-basics']);
+  const assignedQuestionSetIds = await getAssignedQuestionSetIds('student-minseo');
+  const savedAssignments = JSON.parse(await readFile(assignmentsPath, 'utf8'));
+
+  assert.equal(listed.assignments[0].userId, 'student-minseo');
+  assert.deepEqual(updated.assignment.questionSetIds, ['set-js-object-basics']);
+  assert.deepEqual(assignedQuestionSetIds, ['set-js-object-basics']);
+  assert.equal(savedAssignments.length, 1);
+
+  delete process.env.MUNJE_ASSIGNMENTS_PATH;
+});
+
+test('학생은 문제 세트를 배정할 수 없다', async () => {
+  const result = await updateTeacherAssignment('student-minseo', 'student-minseo', ['set-js-object-basics']);
 
   assert.equal(result.error.status, 403);
 });

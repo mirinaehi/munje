@@ -33,13 +33,15 @@ export async function getQuestions() {
   return parseResponse(response);
 }
 
-export async function getQuestionSets() {
-  const response = await fetch(apiUrl('/api/question-sets'));
+export async function getQuestionSets(userId) {
+  const query = userId ? `?userId=${encodeURIComponent(userId)}` : '';
+  const response = await fetch(apiUrl(`/api/question-sets${query}`));
   return parseResponse(response);
 }
 
-export async function getQuestionSet(questionSetId) {
-  const response = await fetch(apiUrl(`/api/question-sets/${questionSetId}`));
+export async function getQuestionSet(questionSetId, userId) {
+  const query = userId ? `?userId=${encodeURIComponent(userId)}` : '';
+  const response = await fetch(apiUrl(`/api/question-sets/${questionSetId}${query}`));
   return parseResponse(response);
 }
 
@@ -139,6 +141,21 @@ export async function deleteTeacherQuestionSet(userId, questionSetId) {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ userId }),
+  });
+
+  return parseResponse(response);
+}
+
+export async function getTeacherAssignments(userId) {
+  const response = await fetch(apiUrl(`/api/teacher/assignments?userId=${encodeURIComponent(userId)}`));
+  return parseResponse(response);
+}
+
+export async function updateTeacherAssignment(userId, studentId, questionSetIds) {
+  const response = await fetch(apiUrl(`/api/teacher/assignments/${studentId}`), {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId, questionSetIds }),
   });
 
   return parseResponse(response);

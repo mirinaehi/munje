@@ -213,6 +213,7 @@ button, label { -webkit-tap-highlight-color: transparent; }
 .ordered-item > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
 .ordered-item > div { display: flex; gap: 5px; }
 .mini-button { min-width: 42px; padding: 7px 8px; font-size: 11px; }
+.assignment-grid { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 16px; align-items: start; }
 
 .state-card { min-height: 280px; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 30px; border: 1px solid var(--line); border-radius: 22px; background: white; color: var(--muted); }
 .state-card.error-state { flex-direction: column; color: #a54838; }
@@ -234,6 +235,7 @@ footer { display: flex; align-items: center; justify-content: center; gap: 7px; 
   .teacher-grid { grid-template-columns: 1fr; }
   .teacher-form-row { grid-template-columns: 1fr; }
   .set-builder-grid { grid-template-columns: 1fr; }
+  .assignment-grid { grid-template-columns: 1fr; }
   .teacher-save { justify-self: stretch; }
   .workspace { grid-template-columns: 1fr; }
   .schema-grid { grid-template-columns: 1fr; }

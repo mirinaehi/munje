@@ -4,6 +4,7 @@ import Icon from './components/Icon.jsx';
 import QuestionList from './components/QuestionList.jsx';
 import QuestionPanel from './components/QuestionPanel.jsx';
 import QuestionSetSelector from './components/QuestionSetSelector.jsx';
+import TeacherAssignmentManager from './components/TeacherAssignmentManager.jsx';
 import TeacherQuestionManager from './components/TeacherQuestionManager.jsx';
 import TeacherQuestionSetManager from './components/TeacherQuestionSetManager.jsx';
 import { getCurrentUser, getQuestionSet, getQuestionSets, getUsers, submitQuestionSet } from './services/api.js';
@@ -12,10 +13,12 @@ import {
   createTeacherQuestion,
   deleteTeacherQuestionSet,
   deleteTeacherQuestion,
+  getTeacherAssignments,
   getTeacherQuestionSets,
   getTeacherQuestions,
   updateTeacherQuestionSet,
   updateTeacherQuestion,
+  updateTeacherAssignment,
 } from './services/api.js';
 
 function App() {
@@ -31,10 +34,13 @@ function App() {
   const [submissionError, setSubmissionError] = useState('');
   const [teacherQuestions, setTeacherQuestions] = useState([]);
   const [teacherQuestionSets, setTeacherQuestionSets] = useState([]);
+  const [teacherAssignments, setTeacherAssignments] = useState([]);
   const [teacherStatus, setTeacherStatus] = useState('idle');
   const [teacherError, setTeacherError] = useState('');
   const [teacherSetStatus, setTeacherSetStatus] = useState('idle');
   const [teacherSetError, setTeacherSetError] = useState('');
+  const [teacherAssignmentStatus, setTeacherAssignmentStatus] = useState('idle');
+  const [teacherAssignmentError, setTeacherAssignmentError] = useState('');
   const [status, setStatus] = useState('loading');
   const [error, setError] = useState('');
 
@@ -43,7 +49,7 @@ function App() {
       .then(([userData, user]) => {
         setUsers(userData);
         setCurrentUser(user);
-        return getQuestionSets();
+        return getQuestionSets(user.id);
       })
       .then((questionSetData) => {
         setQuestionSets(questionSetData);
@@ -60,7 +66,7 @@ function App() {
     if (!selectedSetId) return;
 
     setStatus('loading-set');
-    getQuestionSet(selectedSetId)
+    getQuestionSet(selectedSetId, currentUser?.id)
       .then((data) => {
         setCurrentSet(data);
         setSelectedId(data.questions[0]?.id ?? null);
@@ -74,28 +80,38 @@ function App() {
         setError(loadError.message);
         setStatus('error');
       });
-  }, [selectedSetId]);
+  }, [currentUser, selectedSetId]);
 
   useEffect(() => {
     if (currentUser?.role !== 'teacher') return;
 
     setTeacherStatus('loading');
     setTeacherSetStatus('loading');
+    setTeacherAssignmentStatus('loading');
     setTeacherError('');
     setTeacherSetError('');
+    setTeacherAssignmentError('');
 
-    Promise.all([getTeacherQuestions(currentUser.id), getTeacherQuestionSets(currentUser.id)])
-      .then(([questionData, questionSetData]) => {
+    Promise.all([
+      getTeacherQuestions(currentUser.id),
+      getTeacherQuestionSets(currentUser.id),
+      getTeacherAssignments(currentUser.id),
+    ])
+      .then(([questionData, questionSetData, assignmentData]) => {
         setTeacherQuestions(questionData.questions);
         setTeacherQuestionSets(questionSetData.questionSets);
+        setTeacherAssignments(assignmentData.assignments);
         setTeacherStatus('idle');
         setTeacherSetStatus('idle');
+        setTeacherAssignmentStatus('idle');
       })
       .catch((loadError) => {
         setTeacherError(loadError.message);
         setTeacherSetError(loadError.message);
+        setTeacherAssignmentError(loadError.message);
         setTeacherStatus('idle');
         setTeacherSetStatus('idle');
+        setTeacherAssignmentStatus('idle');
       });
   }, [currentUser]);
 
@@ -163,7 +179,16 @@ function App() {
       }
 
       setStatus('loading-set');
-      const questionSet = await getQuestionSet(selectedSetId);
+      const questionSetsForUser = await getQuestionSets(user.id);
+      setQuestionSets(questionSetsForUser);
+
+      if (!questionSetsForUser.some((questionSet) => questionSet.id === selectedSetId)) {
+        setSelectedSetId(questionSetsForUser[0]?.id ?? null);
+        setStatus(questionSetsForUser.length === 0 ? 'ready' : 'loading-set');
+        return;
+      }
+
+      const questionSet = await getQuestionSet(selectedSetId, user.id);
       setCurrentSet(questionSet);
       setSelectedId(questionSet.questions[0]?.id ?? null);
       setStatus('ready');
@@ -181,7 +206,7 @@ function App() {
   }
 
   async function reloadQuestionSets() {
-    const questionSetData = await getQuestionSets();
+    const questionSetData = await getQuestionSets(currentUser?.id);
     setQuestionSets(questionSetData);
 
     if (!questionSetData.some((questionSet) => questionSet.id === selectedSetId)) {
@@ -194,6 +219,13 @@ function App() {
 
     const data = await getTeacherQuestionSets(currentUser.id);
     setTeacherQuestionSets(data.questionSets);
+  }
+
+  async function reloadTeacherAssignments() {
+    if (!currentUser || !isTeacher) return;
+
+    const data = await getTeacherAssignments(currentUser.id);
+    setTeacherAssignments(data.assignments);
   }
 
   async function createManagedQuestion(question) {
@@ -283,6 +315,21 @@ function App() {
     }
   }
 
+  async function updateManagedAssignment(studentId, questionSetIds) {
+    setTeacherAssignmentStatus('saving');
+    setTeacherAssignmentError('');
+
+    try {
+      await updateTeacherAssignment(currentUser.id, studentId, questionSetIds);
+      await reloadTeacherAssignments();
+      if (currentUser?.id === studentId) await reloadQuestionSets();
+      setTeacherAssignmentStatus('idle');
+    } catch (saveError) {
+      setTeacherAssignmentError(saveError.message);
+      setTeacherAssignmentStatus('idle');
+    }
+  }
+
   return (
     <div className="app">
       <header className="topbar">
@@ -348,6 +395,13 @@ function App() {
               onCreate={createManagedQuestionSet}
               onUpdate={updateManagedQuestionSet}
               onDelete={deleteManagedQuestionSet}
+            />
+            <TeacherAssignmentManager
+              assignments={teacherAssignments}
+              questionSets={teacherQuestionSets}
+              status={teacherAssignmentStatus}
+              error={teacherAssignmentError}
+              onSave={updateManagedAssignment}
             />
           </>
         )}

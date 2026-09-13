@@ -2,7 +2,7 @@ import { getQuestionSet, getQuestionSets } from '../services/questionSetService.
 
 export async function listQuestionSets(_request, response, next) {
   try {
-    response.json(await getQuestionSets());
+    response.json(await getQuestionSets(_request.query.userId));
   } catch (error) {
     next(error);
   }
@@ -10,7 +10,7 @@ export async function listQuestionSets(_request, response, next) {
 
 export async function showQuestionSet(request, response, next) {
   try {
-    const questionSet = await getQuestionSet(request.params.id);
+    const questionSet = await getQuestionSet(request.params.id, request.query.userId);
 
     if (!questionSet) {
       return response.status(404).json({ message: '문제 세트를 찾을 수 없습니다.' });
