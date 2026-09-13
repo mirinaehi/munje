@@ -4,6 +4,7 @@ import Icon from './components/Icon.jsx';
 import QuestionList from './components/QuestionList.jsx';
 import QuestionPanel from './components/QuestionPanel.jsx';
 import QuestionSetSelector from './components/QuestionSetSelector.jsx';
+import TeacherAnalyticsPanel from './components/TeacherAnalyticsPanel.jsx';
 import TeacherAssignmentManager from './components/TeacherAssignmentManager.jsx';
 import TeacherQuestionManager from './components/TeacherQuestionManager.jsx';
 import TeacherQuestionSetManager from './components/TeacherQuestionSetManager.jsx';
@@ -14,6 +15,7 @@ import {
   deleteTeacherQuestionSet,
   deleteTeacherQuestion,
   getTeacherAssignments,
+  getLearningAnalytics,
   getTeacherQuestionSets,
   getTeacherQuestions,
   updateTeacherQuestionSet,
@@ -41,6 +43,9 @@ function App() {
   const [teacherSetError, setTeacherSetError] = useState('');
   const [teacherAssignmentStatus, setTeacherAssignmentStatus] = useState('idle');
   const [teacherAssignmentError, setTeacherAssignmentError] = useState('');
+  const [analytics, setAnalytics] = useState(null);
+  const [analyticsStatus, setAnalyticsStatus] = useState('idle');
+  const [analyticsError, setAnalyticsError] = useState('');
   const [status, setStatus] = useState('loading');
   const [error, setError] = useState('');
 
@@ -88,30 +93,37 @@ function App() {
     setTeacherStatus('loading');
     setTeacherSetStatus('loading');
     setTeacherAssignmentStatus('loading');
+    setAnalyticsStatus('loading');
     setTeacherError('');
     setTeacherSetError('');
     setTeacherAssignmentError('');
+    setAnalyticsError('');
 
     Promise.all([
       getTeacherQuestions(currentUser.id),
       getTeacherQuestionSets(currentUser.id),
       getTeacherAssignments(currentUser.id),
+      getLearningAnalytics(currentUser.id),
     ])
-      .then(([questionData, questionSetData, assignmentData]) => {
+      .then(([questionData, questionSetData, assignmentData, analyticsData]) => {
         setTeacherQuestions(questionData.questions);
         setTeacherQuestionSets(questionSetData.questionSets);
         setTeacherAssignments(assignmentData.assignments);
+        setAnalytics(analyticsData);
         setTeacherStatus('idle');
         setTeacherSetStatus('idle');
         setTeacherAssignmentStatus('idle');
+        setAnalyticsStatus('idle');
       })
       .catch((loadError) => {
         setTeacherError(loadError.message);
         setTeacherSetError(loadError.message);
         setTeacherAssignmentError(loadError.message);
+        setAnalyticsError(loadError.message);
         setTeacherStatus('idle');
         setTeacherSetStatus('idle');
         setTeacherAssignmentStatus('idle');
+        setAnalyticsStatus('idle');
       });
   }, [currentUser]);
 
@@ -226,6 +238,21 @@ function App() {
 
     const data = await getTeacherAssignments(currentUser.id);
     setTeacherAssignments(data.assignments);
+  }
+
+  async function reloadAnalytics() {
+    if (!currentUser || !isTeacher) return;
+
+    setAnalyticsStatus('loading');
+    setAnalyticsError('');
+
+    try {
+      setAnalytics(await getLearningAnalytics(currentUser.id));
+      setAnalyticsStatus('idle');
+    } catch (loadError) {
+      setAnalyticsError(loadError.message);
+      setAnalyticsStatus('idle');
+    }
   }
 
   async function createManagedQuestion(question) {
@@ -402,6 +429,12 @@ function App() {
               status={teacherAssignmentStatus}
               error={teacherAssignmentError}
               onSave={updateManagedAssignment}
+            />
+            <TeacherAnalyticsPanel
+              analytics={analytics}
+              status={analyticsStatus}
+              error={analyticsError}
+              onRefresh={reloadAnalytics}
             />
           </>
         )}

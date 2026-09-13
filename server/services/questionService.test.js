@@ -7,6 +7,7 @@ import { getQuestionSet, getQuestionSets } from './questionSetService.js';
 import { isCorrectAnswer, toPublicQuestion } from './questionService.js';
 import { createSubmission } from './submissionService.js';
 import { getAssignedQuestionSetIds } from './assignmentService.js';
+import { getLearningAnalytics } from './analyticsService.js';
 import {
   getTeacherAssignments,
   updateTeacherAssignment,
@@ -304,6 +305,43 @@ test('교사는 학생에게 문제 세트를 배정할 수 있다', async () =>
 
 test('학생은 문제 세트를 배정할 수 없다', async () => {
   const result = await updateTeacherAssignment('student-minseo', 'student-minseo', ['set-js-object-basics']);
+
+  assert.equal(result.error.status, 403);
+});
+
+test('교사는 제출 기록 기반 학습 분석을 확인할 수 있다', async () => {
+  const temporaryDirectory = await mkdtemp(path.join(os.tmpdir(), 'munje-analytics-'));
+  const submissionsPath = path.join(temporaryDirectory, 'submissions.json');
+  process.env.MUNJE_SUBMISSIONS_PATH = submissionsPath;
+  await writeFile(submissionsPath, JSON.stringify([
+    {
+      id: 'submission-test',
+      userId: 'student-minseo',
+      questionSetId: 'set-js-object-basics',
+      attempt: 1,
+      status: 'submitted',
+      submittedAt: '2026-09-13T00:00:00.000Z',
+      score: 5,
+      totalScore: 10,
+      answers: [
+        { questionId: 'q016', correct: true, score: 5, maxScore: 5 },
+        { questionId: 'q017', correct: false, score: 0, maxScore: 5 },
+      ],
+    },
+  ], null, 2));
+
+  const analytics = await getLearningAnalytics('teacher-hyun');
+
+  assert.equal(analytics.summary.submissionCount, 1);
+  assert.equal(analytics.summary.averageScoreRate, 50);
+  assert.equal(analytics.studentStats[0].name, '민서');
+  assert.equal(analytics.questionStats.find((stat) => stat.questionId === 'q017').accuracy, 0);
+
+  delete process.env.MUNJE_SUBMISSIONS_PATH;
+});
+
+test('학생은 학습 분석을 확인할 수 없다', async () => {
+  const result = await getLearningAnalytics('student-minseo');
 
   assert.equal(result.error.status, 403);
 });

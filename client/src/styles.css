@@ -214,6 +214,17 @@ button, label { -webkit-tap-highlight-color: transparent; }
 .ordered-item > div { display: flex; gap: 5px; }
 .mini-button { min-width: 42px; padding: 7px 8px; font-size: 11px; }
 .assignment-grid { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 16px; align-items: start; }
+.analytics-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+.analytics-summary div { display: grid; gap: 5px; padding: 14px; border: 1px solid var(--line); border-radius: 14px; background: #fbfcf9; }
+.analytics-summary span { color: var(--muted); font-size: 12px; font-weight: 700; }
+.analytics-summary strong { font: 800 24px "DM Sans", sans-serif; }
+.analytics-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.analytics-panel { display: grid; gap: 9px; padding: 14px; border: 1px solid var(--line); border-radius: 14px; background: #fbfcf9; }
+.analytics-panel > strong { font-size: 14px; }
+.analytics-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 10px; border-radius: 10px; background: #fff; }
+.analytics-row span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: 12px; }
+.analytics-row strong { color: var(--green); font-size: 12px; }
+.analytics-empty { min-height: 120px; }
 
 .state-card { min-height: 280px; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 30px; border: 1px solid var(--line); border-radius: 22px; background: white; color: var(--muted); }
 .state-card.error-state { flex-direction: column; color: #a54838; }
@@ -236,6 +247,7 @@ footer { display: flex; align-items: center; justify-content: center; gap: 7px; 
   .teacher-form-row { grid-template-columns: 1fr; }
   .set-builder-grid { grid-template-columns: 1fr; }
   .assignment-grid { grid-template-columns: 1fr; }
+  .analytics-summary, .analytics-grid { grid-template-columns: 1fr; }
   .teacher-save { justify-self: stretch; }
   .workspace { grid-template-columns: 1fr; }
   .schema-grid { grid-template-columns: 1fr; }

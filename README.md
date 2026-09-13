@@ -1034,6 +1034,7 @@ npm run dev
 * 교사용 문제 세트 삭제: `DELETE /api/teacher/question-sets/:id`
 * 교사용 배정 목록: `GET /api/teacher/assignments`
 * 교사용 학생별 배정 저장: `PUT /api/teacher/assignments/:studentId`
+* 교사용 학습 분석: `GET /api/analytics`
 * 문제 세트 상세 응답에는 문제에서 사용하는 공통 지문 `contexts`가 포함된다.
 * 지원 문제 유형: 객관식, 단답형, 빈칸 채우기, SQL 작성형
 

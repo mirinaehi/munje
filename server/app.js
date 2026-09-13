@@ -1,5 +1,6 @@
 import cors from 'cors';
 import express from 'express';
+import { analyticsRouter } from './routes/analytics.js';
 import { healthRouter } from './routes/health.js';
 import { questionSetsRouter } from './routes/questionSets.js';
 import { questionsRouter } from './routes/questions.js';
@@ -13,6 +14,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json({ limit: '1mb' }));
+app.use('/api/analytics', analyticsRouter);
 app.use('/api/health', healthRouter);
 app.use('/api/question-sets', questionSetsRouter);
 app.use('/api/questions', questionsRouter);

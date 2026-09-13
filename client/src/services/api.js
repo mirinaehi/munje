@@ -160,3 +160,8 @@ export async function updateTeacherAssignment(userId, studentId, questionSetIds)
 
   return parseResponse(response);
 }
+
+export async function getLearningAnalytics(userId) {
+  const response = await fetch(apiUrl(`/api/analytics?userId=${encodeURIComponent(userId)}`));
+  return parseResponse(response);
+}
