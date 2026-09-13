@@ -1,7 +1,6 @@
 {
   "installCommand": "npm install",
   "buildCommand": "echo \"No build step required for API deployment\"",
-  "outputDirectory": "public",
   "rewrites": [
     {
       "source": "/api/(.*)",
