@@ -4,6 +4,7 @@ import { healthRouter } from './routes/health.js';
 import { questionSetsRouter } from './routes/questionSets.js';
 import { questionsRouter } from './routes/questions.js';
 import { submissionsRouter } from './routes/submissions.js';
+import { teacherQuestionSetsRouter } from './routes/teacherQuestionSets.js';
 import { teacherQuestionsRouter } from './routes/teacherQuestions.js';
 import { usersRouter } from './routes/users.js';
 
@@ -15,6 +16,7 @@ app.use('/api/health', healthRouter);
 app.use('/api/question-sets', questionSetsRouter);
 app.use('/api/questions', questionsRouter);
 app.use('/api/submissions', submissionsRouter);
+app.use('/api/teacher/question-sets', teacherQuestionSetsRouter);
 app.use('/api/teacher/questions', teacherQuestionsRouter);
 app.use('/api/users', usersRouter);
 

@@ -108,3 +108,38 @@ export async function deleteTeacherQuestion(userId, questionId) {
 
   return parseResponse(response);
 }
+
+export async function getTeacherQuestionSets(userId) {
+  const response = await fetch(apiUrl(`/api/teacher/question-sets?userId=${encodeURIComponent(userId)}`));
+  return parseResponse(response);
+}
+
+export async function createTeacherQuestionSet(userId, questionSet) {
+  const response = await fetch(apiUrl('/api/teacher/question-sets'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId, questionSet }),
+  });
+
+  return parseResponse(response);
+}
+
+export async function updateTeacherQuestionSet(userId, questionSetId, questionSet) {
+  const response = await fetch(apiUrl(`/api/teacher/question-sets/${questionSetId}`), {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId, questionSet }),
+  });
+
+  return parseResponse(response);
+}
+
+export async function deleteTeacherQuestionSet(userId, questionSetId) {
+  const response = await fetch(apiUrl(`/api/teacher/question-sets/${questionSetId}`), {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId }),
+  });
+
+  return parseResponse(response);
+}

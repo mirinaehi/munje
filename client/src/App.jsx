@@ -5,11 +5,16 @@ import QuestionList from './components/QuestionList.jsx';
 import QuestionPanel from './components/QuestionPanel.jsx';
 import QuestionSetSelector from './components/QuestionSetSelector.jsx';
 import TeacherQuestionManager from './components/TeacherQuestionManager.jsx';
+import TeacherQuestionSetManager from './components/TeacherQuestionSetManager.jsx';
 import { getCurrentUser, getQuestionSet, getQuestionSets, getUsers, submitQuestionSet } from './services/api.js';
 import {
+  createTeacherQuestionSet,
   createTeacherQuestion,
+  deleteTeacherQuestionSet,
   deleteTeacherQuestion,
+  getTeacherQuestionSets,
   getTeacherQuestions,
+  updateTeacherQuestionSet,
   updateTeacherQuestion,
 } from './services/api.js';
 
@@ -25,8 +30,11 @@ function App() {
   const [submissionStatus, setSubmissionStatus] = useState('idle');
   const [submissionError, setSubmissionError] = useState('');
   const [teacherQuestions, setTeacherQuestions] = useState([]);
+  const [teacherQuestionSets, setTeacherQuestionSets] = useState([]);
   const [teacherStatus, setTeacherStatus] = useState('idle');
   const [teacherError, setTeacherError] = useState('');
+  const [teacherSetStatus, setTeacherSetStatus] = useState('idle');
+  const [teacherSetError, setTeacherSetError] = useState('');
   const [status, setStatus] = useState('loading');
   const [error, setError] = useState('');
 
@@ -72,16 +80,22 @@ function App() {
     if (currentUser?.role !== 'teacher') return;
 
     setTeacherStatus('loading');
+    setTeacherSetStatus('loading');
     setTeacherError('');
+    setTeacherSetError('');
 
-    getTeacherQuestions(currentUser.id)
-      .then((data) => {
-        setTeacherQuestions(data.questions);
+    Promise.all([getTeacherQuestions(currentUser.id), getTeacherQuestionSets(currentUser.id)])
+      .then(([questionData, questionSetData]) => {
+        setTeacherQuestions(questionData.questions);
+        setTeacherQuestionSets(questionSetData.questionSets);
         setTeacherStatus('idle');
+        setTeacherSetStatus('idle');
       })
       .catch((loadError) => {
         setTeacherError(loadError.message);
+        setTeacherSetError(loadError.message);
         setTeacherStatus('idle');
+        setTeacherSetStatus('idle');
       });
   }, [currentUser]);
 
@@ -166,6 +180,22 @@ function App() {
     setTeacherQuestions(data.questions);
   }
 
+  async function reloadQuestionSets() {
+    const questionSetData = await getQuestionSets();
+    setQuestionSets(questionSetData);
+
+    if (!questionSetData.some((questionSet) => questionSet.id === selectedSetId)) {
+      setSelectedSetId(questionSetData[0]?.id ?? null);
+    }
+  }
+
+  async function reloadTeacherQuestionSets() {
+    if (!currentUser || !isTeacher) return;
+
+    const data = await getTeacherQuestionSets(currentUser.id);
+    setTeacherQuestionSets(data.questionSets);
+  }
+
   async function createManagedQuestion(question) {
     setTeacherStatus('saving');
     setTeacherError('');
@@ -205,6 +235,51 @@ function App() {
     } catch (deleteError) {
       setTeacherError(deleteError.message);
       setTeacherStatus('idle');
+    }
+  }
+
+  async function createManagedQuestionSet(questionSet) {
+    setTeacherSetStatus('saving');
+    setTeacherSetError('');
+
+    try {
+      await createTeacherQuestionSet(currentUser.id, questionSet);
+      await reloadTeacherQuestionSets();
+      await reloadQuestionSets();
+      setTeacherSetStatus('idle');
+    } catch (saveError) {
+      setTeacherSetError(saveError.message);
+      setTeacherSetStatus('idle');
+    }
+  }
+
+  async function updateManagedQuestionSet(questionSetId, questionSet) {
+    setTeacherSetStatus('saving');
+    setTeacherSetError('');
+
+    try {
+      await updateTeacherQuestionSet(currentUser.id, questionSetId, questionSet);
+      await reloadTeacherQuestionSets();
+      await reloadQuestionSets();
+      setTeacherSetStatus('idle');
+    } catch (saveError) {
+      setTeacherSetError(saveError.message);
+      setTeacherSetStatus('idle');
+    }
+  }
+
+  async function deleteManagedQuestionSet(questionSetId) {
+    setTeacherSetStatus('saving');
+    setTeacherSetError('');
+
+    try {
+      await deleteTeacherQuestionSet(currentUser.id, questionSetId);
+      await reloadTeacherQuestionSets();
+      await reloadQuestionSets();
+      setTeacherSetStatus('idle');
+    } catch (deleteError) {
+      setTeacherSetError(deleteError.message);
+      setTeacherSetStatus('idle');
     }
   }
 
@@ -256,14 +331,25 @@ function App() {
         </section>
 
         {isTeacher && (
-          <TeacherQuestionManager
-            questions={teacherQuestions}
-            status={teacherStatus}
-            error={teacherError}
-            onCreate={createManagedQuestion}
-            onUpdate={updateManagedQuestion}
-            onDelete={deleteManagedQuestion}
-          />
+          <>
+            <TeacherQuestionManager
+              questions={teacherQuestions}
+              status={teacherStatus}
+              error={teacherError}
+              onCreate={createManagedQuestion}
+              onUpdate={updateManagedQuestion}
+              onDelete={deleteManagedQuestion}
+            />
+            <TeacherQuestionSetManager
+              questionSets={teacherQuestionSets}
+              questions={teacherQuestions}
+              status={teacherSetStatus}
+              error={teacherSetError}
+              onCreate={createManagedQuestionSet}
+              onUpdate={updateManagedQuestionSet}
+              onDelete={deleteManagedQuestionSet}
+            />
+          </>
         )}
 
         {status === 'loading' && <div className="state-card"><span className="loader" />문제 세트 목록을 불러오고 있어요.</div>}

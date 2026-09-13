@@ -7,6 +7,12 @@ import { getQuestionSet, getQuestionSets } from './questionSetService.js';
 import { isCorrectAnswer, toPublicQuestion } from './questionService.js';
 import { createSubmission } from './submissionService.js';
 import {
+  createTeacherQuestionSet,
+  deleteTeacherQuestionSet,
+  getTeacherQuestionSets,
+  updateTeacherQuestionSet,
+} from './teacherQuestionSetService.js';
+import {
   createTeacherQuestion,
   deleteTeacherQuestion,
   getTeacherQuestions,
@@ -216,6 +222,48 @@ test('학생은 문제를 관리할 수 없다', async () => {
     choices: ['아니오', '예'],
     answer: 0,
     explanation: '학생 권한은 문제 관리가 제한됩니다.',
+  });
+
+  assert.equal(result.error.status, 403);
+});
+
+test('교사는 문제 세트를 생성, 수정, 삭제할 수 있다', async () => {
+  const temporaryDirectory = await mkdtemp(path.join(os.tmpdir(), 'munje-question-sets-'));
+  const questionSetsPath = path.join(temporaryDirectory, 'questionSets.json');
+  process.env.MUNJE_QUESTION_SETS_PATH = questionSetsPath;
+  await writeFile(questionSetsPath, '[]\n');
+
+  const created = await createTeacherQuestionSet('teacher-hyun', {
+    title: '테스트 세트',
+    description: '테스트용 문제 세트입니다.',
+    questions: ['q016', 'q017'],
+    isPublished: false,
+  });
+  const listed = await getTeacherQuestionSets('teacher-hyun');
+  const updated = await updateTeacherQuestionSet('teacher-hyun', created.questionSet.id, {
+    ...created.questionSet,
+    title: '수정된 테스트 세트',
+    questions: ['q017', 'q016'],
+    isPublished: true,
+  });
+  const deleted = await deleteTeacherQuestionSet('teacher-hyun', created.questionSet.id);
+  const savedQuestionSets = JSON.parse(await readFile(questionSetsPath, 'utf8'));
+
+  assert.equal(created.questionSet.createdBy, 'teacher-hyun');
+  assert.equal(listed.questionSets.length, 1);
+  assert.deepEqual(updated.questionSet.questions, ['q017', 'q016']);
+  assert.equal(updated.questionSet.isPublished, true);
+  assert.equal(deleted.deletedId, created.questionSet.id);
+  assert.equal(savedQuestionSets.length, 0);
+
+  delete process.env.MUNJE_QUESTION_SETS_PATH;
+});
+
+test('학생은 문제 세트를 관리할 수 없다', async () => {
+  const result = await createTeacherQuestionSet('student-minseo', {
+    title: '권한 없는 세트',
+    description: '학생은 만들 수 없습니다.',
+    questions: ['q016'],
   });
 
   assert.equal(result.error.status, 403);

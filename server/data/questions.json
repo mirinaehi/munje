@@ -66,7 +66,10 @@
     "content": "DEFAULT_USER_PROFILE의 name 값은 무엇인가요?",
     "code": "const DEFAULT_USER_PROFILE = USER_PROFILES.jin;",
     "answer": "Jin",
-    "acceptedAnswers": ["Jin", "jin"],
+    "acceptedAnswers": [
+      "Jin",
+      "jin"
+    ],
     "score": 5,
     "difficulty": "easy",
     "unit": "JavaScript 객체",
@@ -83,7 +86,9 @@
       {
         "id": "fallback",
         "label": "빈칸",
-        "answers": ["DEFAULT_USER_PROFILE"]
+        "answers": [
+          "DEFAULT_USER_PROFILE"
+        ]
       }
     ],
     "score": 5,
@@ -124,5 +129,26 @@
     "difficulty": "easy",
     "unit": "학습 흐름",
     "explanation": "학생은 문제를 확인하고 답안을 작성한 뒤 제출하며, 서버 채점 후 결과와 해설을 확인합니다."
+  },
+  {
+    "id": "q-6923325a-0420-426a-93e7-e683ac9ceeff",
+    "type": "multiple-choice",
+    "title": "다음 코드를 실행했을 때 createGreeting 변수에 저장되는 값은?",
+    "content": "const createGreeting = require(\"./greeting\");",
+    "choices": [
+      "\"안녕하세요, Jin님!\"이라는 문자열",
+      "greeting.js에서 내보낸 함수 자체",
+      "createGreeting이라는 속성을 가진 객체",
+      "\"./greeting\"이라는 파일 경로 문자열",
+      "함수가 아직 호출되지 않았으므로 undefined"
+    ],
+    "answer": 1,
+    "score": 5,
+    "difficulty": "medium",
+    "unit": "다음 CommonJS 파일을 보고 4~8번에 답하시오.",
+    "explanation": "정답과 해설을 검토한 뒤 수정하세요.",
+    "createdBy": "teacher-hyun",
+    "updatedAt": "2026-09-13T05:20:15.402Z",
+    "createdAt": "2026-09-13T05:20:15.402Z"
   }
 ]
