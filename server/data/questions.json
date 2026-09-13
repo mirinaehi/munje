@@ -54,5 +54,51 @@
     "difficulty": "medium",
     "unit": "JavaScript 객체",
     "explanation": "Object.values는 객체의 값만 모아 새 배열로 반환하므로 두 프로필 객체가 배열에 담깁니다."
+  },
+  {
+    "id": "q019",
+    "type": "short-answer",
+    "title": "기본 프로필 이름",
+    "content": "DEFAULT_USER_PROFILE의 name 값은 무엇인가요?",
+    "code": "const DEFAULT_USER_PROFILE = USER_PROFILES.jin;",
+    "answer": "Jin",
+    "acceptedAnswers": ["Jin", "jin"],
+    "score": 5,
+    "difficulty": "easy",
+    "unit": "JavaScript 객체",
+    "explanation": "DEFAULT_USER_PROFILE은 USER_PROFILES.jin을 가리키므로 name 값은 Jin입니다."
+  },
+  {
+    "id": "q020",
+    "type": "fill-blank",
+    "title": "기본값 반환 이해",
+    "content": "resolveUserProfile 함수는 전달받은 profileId가 USER_PROFILES에 없을 때 빈칸의 값을 반환합니다.",
+    "code": "function resolveUserProfile(profileId) {\n  return USER_PROFILES[profileId] ?? ________;\n}",
+    "blanks": [
+      {
+        "id": "fallback",
+        "label": "빈칸",
+        "answers": ["DEFAULT_USER_PROFILE"]
+      }
+    ],
+    "score": 5,
+    "difficulty": "medium",
+    "unit": "JavaScript 객체",
+    "explanation": "널 병합 연산자(??) 오른쪽에는 USER_PROFILES에서 값을 찾지 못했을 때 사용할 DEFAULT_USER_PROFILE이 옵니다."
+  },
+  {
+    "id": "q021",
+    "type": "sql",
+    "title": "가격 조건 SELECT",
+    "content": "도서 테이블에서 가격이 15,000원 이상인 책의 제목과 가격을 조회하는 SQL을 작성하세요.",
+    "answer": "SELECT 제목, 가격\nFROM 도서\nWHERE 가격 >= 15000;",
+    "acceptedAnswers": [
+      "SELECT 제목, 가격 FROM 도서 WHERE 가격 >= 15000;",
+      "SELECT 제목, 가격 FROM 도서 WHERE 15000 <= 가격;"
+    ],
+    "score": 10,
+    "difficulty": "medium",
+    "unit": "SQL SELECT",
+    "explanation": "SELECT 절에는 제목과 가격을 두고, WHERE 절에서 가격이 15000 이상인 행만 남깁니다."
   }
 ]

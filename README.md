@@ -33,7 +33,7 @@
 
 ### 1.5 현재 개발 상태
 
-* 3단계 — 문제 세트 완료
+* 4단계 — 다양한 문제 유형 완료
 
 ---
 
@@ -1021,6 +1021,7 @@ npm run dev
 * 객관식 채점: `POST /api/questions/:id/check`
 * 문제 세트 목록: `GET /api/question-sets`
 * 문제 세트 상세: `GET /api/question-sets/:id`
+* 지원 문제 유형: 객관식, 단답형, 빈칸 채우기, SQL 작성형
 
 ---
 

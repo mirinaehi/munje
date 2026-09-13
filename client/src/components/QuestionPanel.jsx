@@ -12,24 +12,24 @@ export default function QuestionPanel({
   hasNext,
   positionLabel,
 }) {
-  const [selectedChoice, setSelectedChoice] = useState(null);
+  const [answer, setAnswer] = useState(getInitialAnswer(question, result));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    setSelectedChoice(result?.submittedAnswer ?? null);
+    setAnswer(getInitialAnswer(question, result));
     setError('');
   }, [question.id, result]);
 
   async function handleSubmit(event) {
     event.preventDefault();
-    if (selectedChoice === null || result) return;
+    if (isAnswerEmpty(question, answer) || result) return;
 
     setIsSubmitting(true);
     setError('');
 
     try {
-      onResult(await submitAnswer(question.id, selectedChoice));
+      onResult(await submitAnswer(question.id, answer));
     } catch (submitError) {
       setError(submitError.message);
     } finally {
@@ -53,32 +53,13 @@ export default function QuestionPanel({
         <p className="question-content">{question.content}</p>
         {question.code && <pre className="code-block"><code>{question.code}</code></pre>}
 
-        <fieldset className="choices" disabled={Boolean(result) || isSubmitting}>
-          <legend className="sr-only">답을 하나 선택하세요</legend>
-          {question.choices.map((choice, index) => {
-            const isSelected = selectedChoice === index;
-            const isCorrectChoice = result?.correctAnswer === index;
-            const isIncorrectChoice = result && isSelected && !result.correct;
-
-            return (
-              <label
-                className={`choice ${isSelected ? 'selected' : ''} ${isCorrectChoice ? 'correct-choice' : ''} ${isIncorrectChoice ? 'incorrect-choice' : ''}`}
-                key={choice}
-              >
-                <input
-                  checked={isSelected}
-                  name={`answer-${question.id}`}
-                  onChange={() => setSelectedChoice(index)}
-                  type="radio"
-                  value={index}
-                />
-                <span className="choice-index">{index + 1}</span>
-                <span className="choice-text">{choice}</span>
-                {isCorrectChoice && <span className="choice-mark"><Icon name="check" size={17} /></span>}
-              </label>
-            );
-          })}
-        </fieldset>
+        <AnswerInput
+          answer={answer}
+          disabled={Boolean(result) || isSubmitting}
+          onChange={setAnswer}
+          question={question}
+          result={result}
+        />
 
         {result && (
           <div className={`feedback ${result.correct ? 'correct' : 'incorrect'}`} role="status">
@@ -86,6 +67,9 @@ export default function QuestionPanel({
             <div>
               <strong>{result.correct ? '정답이에요!' : '아쉽지만 정답이 아니에요.'}</strong>
               <p>{result.explanation}</p>
+              {question.type !== 'multiple-choice' && (
+                <p className="answer-reveal">정답: {formatCorrectAnswer(result.correctAnswer)}</p>
+              )}
             </div>
           </div>
         )}
@@ -93,13 +77,13 @@ export default function QuestionPanel({
         {error && <p className="error-message" role="alert">{error}</p>}
 
         <div className="submit-row">
-          <p>{positionLabel} · {result ? '다음 문제로 이동할 수 있어요.' : '답을 고른 뒤 제출하면 바로 확인할 수 있어요.'}</p>
+          <p>{positionLabel} · {result ? '다음 문제로 이동할 수 있어요.' : '답안을 입력한 뒤 제출하면 바로 확인할 수 있어요.'}</p>
           <div className="action-group">
             <button className="nav-button" disabled={!hasPrevious} onClick={onPrevious} type="button">
               <Icon name="back" size={17} />
               이전
             </button>
-            <button className="submit-button" disabled={selectedChoice === null || isSubmitting || Boolean(result)} type="submit">
+            <button className="submit-button" disabled={isAnswerEmpty(question, answer) || isSubmitting || Boolean(result)} type="submit">
               {isSubmitting ? '채점 중…' : result ? '제출 완료' : '답안 제출'}
               {!result && <Icon name="arrow" size={18} />}
             </button>
@@ -111,5 +95,110 @@ export default function QuestionPanel({
         </div>
       </form>
     </article>
+  );
+}
+
+function getInitialAnswer(question, result) {
+  if (result) return result.submittedAnswer;
+  if (question.type === 'multiple-choice') return null;
+  if (question.type === 'fill-blank') {
+    return Object.fromEntries(question.blanks.map((blank) => [blank.id, '']));
+  }
+  return '';
+}
+
+function isAnswerEmpty(question, answer) {
+  if (question.type === 'multiple-choice') return answer === null;
+  if (question.type === 'fill-blank') {
+    return question.blanks.some((blank) => String(answer?.[blank.id] ?? '').trim() === '');
+  }
+  return String(answer ?? '').trim() === '';
+}
+
+function formatCorrectAnswer(correctAnswer) {
+  if (correctAnswer && typeof correctAnswer === 'object') {
+    return Object.values(correctAnswer).join(', ');
+  }
+
+  return correctAnswer;
+}
+
+function AnswerInput({ question, answer, result, disabled, onChange }) {
+  if (question.type === 'multiple-choice') {
+    return (
+      <fieldset className="choices" disabled={disabled}>
+        <legend className="sr-only">답을 하나 선택하세요</legend>
+        {question.choices.map((choice, index) => {
+          const isSelected = answer === index;
+          const isCorrectChoice = result?.correctAnswer === index;
+          const isIncorrectChoice = result && isSelected && !result.correct;
+
+          return (
+            <label
+              className={`choice ${isSelected ? 'selected' : ''} ${isCorrectChoice ? 'correct-choice' : ''} ${isIncorrectChoice ? 'incorrect-choice' : ''}`}
+              key={choice}
+            >
+              <input
+                checked={isSelected}
+                name={`answer-${question.id}`}
+                onChange={() => onChange(index)}
+                type="radio"
+                value={index}
+              />
+              <span className="choice-index">{index + 1}</span>
+              <span className="choice-text">{choice}</span>
+              {isCorrectChoice && <span className="choice-mark"><Icon name="check" size={17} /></span>}
+            </label>
+          );
+        })}
+      </fieldset>
+    );
+  }
+
+  if (question.type === 'fill-blank') {
+    return (
+      <div className="blank-inputs">
+        {question.blanks.map((blank) => (
+          <label className="answer-field" key={blank.id}>
+            <span>{blank.label}</span>
+            <input
+              disabled={disabled}
+              onChange={(event) => onChange({ ...answer, [blank.id]: event.target.value })}
+              placeholder="빈칸에 들어갈 값을 입력하세요"
+              type="text"
+              value={answer?.[blank.id] ?? ''}
+            />
+          </label>
+        ))}
+      </div>
+    );
+  }
+
+  if (question.type === 'sql') {
+    return (
+      <label className="answer-field">
+        <span>SQL 답안</span>
+        <textarea
+          className="sql-answer"
+          disabled={disabled}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder="SELECT ..."
+          value={answer}
+        />
+      </label>
+    );
+  }
+
+  return (
+    <label className="answer-field">
+      <span>답안</span>
+      <input
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder="답을 입력하세요"
+        type="text"
+        value={answer}
+      />
+    </label>
   );
 }

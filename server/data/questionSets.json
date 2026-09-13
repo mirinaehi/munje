@@ -2,8 +2,16 @@
   {
     "id": "set-js-object-basics",
     "title": "JavaScript 객체와 배열 기초",
-    "description": "USER_PROFILES 예제로 객체 속성 접근과 Object.values의 동작을 확인합니다.",
-    "questions": ["q016", "q017", "q018"],
+    "description": "USER_PROFILES 예제로 객체 속성 접근, Object.values, 기본값 처리를 확인합니다.",
+    "questions": ["q016", "q017", "q018", "q019", "q020"],
+    "isPublished": true,
+    "createdBy": "teacher001"
+  },
+  {
+    "id": "set-sql-select-basics",
+    "title": "SQL SELECT 기초",
+    "description": "SELECT, FROM, WHERE를 사용해 조건에 맞는 데이터를 조회합니다.",
+    "questions": ["q021"],
     "isPublished": true,
     "createdBy": "teacher001"
   }

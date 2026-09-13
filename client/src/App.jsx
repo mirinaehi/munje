@@ -67,7 +67,7 @@ function App() {
           <span className="brand-mark">문</span>
           <span>문제</span>
         </a>
-        <div className="step-label"><span /> 3단계 · 문제 세트</div>
+        <div className="step-label"><span /> 4단계 · 다양한 문제 유형</div>
         <div className="profile"><span>학생</span><strong>민서</strong><span className="avatar">민</span></div>
       </header>
 
