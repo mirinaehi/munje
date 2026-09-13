@@ -5,6 +5,7 @@
   "workspaces": ["client", "server"],
   "scripts": {
     "dev": "concurrently -n server,client -c green,cyan \"npm run dev --workspace server\" \"npm run dev --workspace client\"",
+    "debug:server": "npm run debug --workspace server",
     "build": "npm run build --workspace client",
     "start": "npm run start --workspace server",
     "test": "npm run test --workspace server"

@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "node --watch index.js",
+    "debug": "node --inspect --watch index.js",
     "start": "node index.js",
     "test": "node --test"
   },

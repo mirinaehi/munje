@@ -33,7 +33,7 @@
 
 ### 1.5 현재 개발 상태
 
-* 1단계 — 프로젝트 기본 구조 완료
+* 2단계 — 객관식 문제 완료
 
 ---
 
@@ -1017,6 +1017,8 @@ npm run dev
 * Frontend: `http://localhost:5173`
 * Backend API: `http://localhost:4000`
 * 연결 확인: `GET /api/health`
+* 문제 목록: `GET /api/questions`
+* 객관식 채점: `POST /api/questions/:id/check`
 
 ---
 

@@ -1,43 +1,87 @@
-import { useEffect, useState } from 'react';
-import { checkApiHealth } from './services/api.js';
+import { useEffect, useMemo, useState } from 'react';
+import Icon from './components/Icon.jsx';
+import QuestionList from './components/QuestionList.jsx';
+import QuestionPanel from './components/QuestionPanel.jsx';
+import { getQuestions } from './services/api.js';
 
 function App() {
-  const [connection, setConnection] = useState({ status: 'checking', message: 'API 연결 확인 중…' });
+  const [questions, setQuestions] = useState([]);
+  const [selectedId, setSelectedId] = useState(null);
+  const [results, setResults] = useState({});
+  const [status, setStatus] = useState('loading');
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    checkApiHealth()
+    getQuestions()
       .then((data) => {
-        setConnection({
-          status: data.ok ? 'connected' : 'error',
-          message: data.message ?? 'API 서버와 연결되었습니다.',
-        });
+        setQuestions(data);
+        setSelectedId(data[0]?.id ?? null);
+        setStatus('ready');
       })
-      .catch(() => {
-        setConnection({ status: 'error', message: 'API 서버에 연결할 수 없습니다.' });
+      .catch((loadError) => {
+        setError(loadError.message);
+        setStatus('error');
       });
   }, []);
 
+  const selectedQuestion = useMemo(
+    () => questions.find((question) => question.id === selectedId),
+    [questions, selectedId],
+  );
+  const solvedCount = Object.keys(results).length;
+
+  function recordResult(result) {
+    setResults((current) => ({ ...current, [result.questionId]: result }));
+  }
+
   return (
-    <main className="app-shell">
-      <section className="status-card" aria-labelledby="page-title">
-        <div className="logo" aria-hidden="true">문</div>
-        <p className="eyebrow">MUNJE · STEP 1</p>
-        <h1 id="page-title">문제 풀이 플랫폼</h1>
-        <p className="description">React 화면과 Express API를 연결하는 기본 프로젝트 구성이 완료되었습니다.</p>
+    <div className="app">
+      <header className="topbar">
+        <a className="brand" href="/" aria-label="문제 홈">
+          <span className="brand-mark">문</span>
+          <span>문제</span>
+        </a>
+        <div className="step-label"><span /> 2단계 · 객관식 문제</div>
+        <div className="profile"><span>학생</span><strong>민서</strong><span className="avatar">민</span></div>
+      </header>
 
-        <div className={`connection ${connection.status}`} role="status" aria-live="polite">
-          <span className="status-dot" />
-          <span>{connection.message}</span>
-        </div>
+      <main className="main-content">
+        <section className="intro">
+          <div>
+            <p className="eyebrow">PRACTICE SESSION</p>
+            <h1>개념을 확인해 볼까요?</h1>
+            <p>문제를 골라 답안을 제출하면 정답과 해설을 바로 확인할 수 있어요.</p>
+          </div>
+          <div className="progress-summary">
+            <div className="progress-copy"><span>풀이 현황</span><strong>{solvedCount} / {questions.length}</strong></div>
+            <div className="progress-track"><span style={{ width: questions.length ? `${(solvedCount / questions.length) * 100}%` : '0%' }} /></div>
+          </div>
+        </section>
 
-        <div className="stack" aria-label="기술 구성">
-          <span>React</span>
-          <span>Vite</span>
-          <span>Node.js</span>
-          <span>Express</span>
-        </div>
-      </section>
-    </main>
+        {status === 'loading' && <div className="state-card"><span className="loader" />문제를 불러오고 있어요.</div>}
+        {status === 'error' && <div className="state-card error-state"><strong>문제를 불러오지 못했습니다.</strong><span>{error}</span></div>}
+        {status === 'ready' && questions.length === 0 && <div className="state-card">등록된 문제가 없습니다.</div>}
+
+        {status === 'ready' && selectedQuestion && (
+          <div className="workspace">
+            <QuestionList
+              questions={questions}
+              results={results}
+              selectedId={selectedId}
+              onSelect={setSelectedId}
+            />
+            <QuestionPanel
+              key={selectedQuestion.id}
+              question={selectedQuestion}
+              result={results[selectedQuestion.id]}
+              onResult={recordResult}
+            />
+          </div>
+        )}
+      </main>
+
+      <footer><Icon name="book" size={16} /> 작은 확인이 단단한 실력을 만듭니다.</footer>
+    </div>
   );
 }
 

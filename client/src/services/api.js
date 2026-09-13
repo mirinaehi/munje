@@ -7,3 +7,28 @@ export async function checkApiHealth() {
 
   return response.json();
 }
+
+async function parseResponse(response) {
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message ?? '요청을 처리하지 못했습니다.');
+  }
+
+  return data;
+}
+
+export async function getQuestions() {
+  const response = await fetch('/api/questions');
+  return parseResponse(response);
+}
+
+export async function submitAnswer(questionId, answer) {
+  const response = await fetch(`/api/questions/${questionId}/check`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ answer }),
+  });
+
+  return parseResponse(response);
+}

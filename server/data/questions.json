@@ -1,1 +1,58 @@
-[]
+[
+  {
+    "id": "q016",
+    "type": "multiple-choice",
+    "title": "객체의 데이터 구조",
+    "content": "USER_PROFILES의 데이터 구조에 대한 설명으로 옳은 것은?",
+    "choices": [
+      "Jin과 Mina라는 문자열만 들어 있는 배열이다.",
+      "jin, mina를 키로 사용하고 각 키에 프로필 객체를 연결한 객체이다.",
+      "프로필 객체 두 개를 하나의 문자열로 합친 값이다.",
+      "id를 숫자 배열의 인덱스로 사용하는 배열이다.",
+      "프로필의 개수만 저장하는 숫자이다."
+    ],
+    "answer": 1,
+    "score": 5,
+    "difficulty": "easy",
+    "unit": "JavaScript 객체",
+    "explanation": "USER_PROFILES는 jin과 mina를 키로 사용하며, 각 키의 값으로 프로필 객체를 저장합니다."
+  },
+  {
+    "id": "q017",
+    "type": "multiple-choice",
+    "title": "객체 속성 접근",
+    "content": "DEFAULT_USER_PROFILE이 가리키는 값은 무엇인가요?",
+    "code": "const DEFAULT_USER_PROFILE = USER_PROFILES.jin;",
+    "choices": [
+      "jin이라는 문자열",
+      "Jin이라는 문자열",
+      "USER_PROFILES 전체 객체",
+      "jin과 mina 프로필이 들어 있는 배열",
+      "USER_PROFILES.jin에 저장된 프로필 객체"
+    ],
+    "answer": 4,
+    "score": 5,
+    "difficulty": "easy",
+    "unit": "JavaScript 객체",
+    "explanation": "점 표기법으로 USER_PROFILES의 jin 속성에 접근했으므로, 해당 속성에 저장된 프로필 객체를 가리킵니다."
+  },
+  {
+    "id": "q018",
+    "type": "multiple-choice",
+    "title": "Object.values 이해",
+    "content": "다음 코드로 만들어지는 userProfiles에 대한 설명으로 옳은 것은?",
+    "code": "const userProfiles = Object.values(USER_PROFILES);",
+    "choices": [
+      "['jin', 'mina']처럼 키만 모은 배열이다.",
+      "['Jin', 'Mina']처럼 이름 속성만 모은 배열이다.",
+      "원래 객체에 들어 있는 프로필의 개수인 숫자 2이다.",
+      "Jin과 Mina의 프로필 객체 두 개가 들어 있는 배열이다.",
+      "jin 프로필 객체 하나만 저장한 값이다."
+    ],
+    "answer": 3,
+    "score": 5,
+    "difficulty": "medium",
+    "unit": "JavaScript 객체",
+    "explanation": "Object.values는 객체의 값만 모아 새 배열로 반환하므로 두 프로필 객체가 배열에 담깁니다."
+  }
+]
