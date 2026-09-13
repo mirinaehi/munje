@@ -23,7 +23,9 @@ function normalizeChoices(choices) {
 
 function normalizeQuestionInput(input, teacherId, existingQuestion = {}) {
   const choices = normalizeChoices(input.choices);
-  const answer = Number(input.answer);
+  const answer = input.answer === null || input.answer === undefined || input.answer === ''
+    ? null
+    : Number(input.answer);
   const score = Number(input.score);
 
   return {
@@ -46,6 +48,7 @@ function validateQuestion(question) {
   if (!question.title) return '문제 제목이 필요합니다.';
   if (!question.content) return '문제 내용이 필요합니다.';
   if (question.choices.length < 2) return '객관식 보기는 2개 이상 필요합니다.';
+  if (question.answer === null) return '정답이 미정입니다. 정답 번호를 선택하세요.';
   if (!Number.isInteger(question.answer) || question.answer < 0 || question.answer >= question.choices.length) {
     return '정답 번호가 보기 범위를 벗어났습니다.';
   }

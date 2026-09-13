@@ -7,9 +7,17 @@ const emptyQuestion = {
   difficulty: 'easy',
   score: 5,
   choicesText: '보기 1\n보기 2\n보기 3\n보기 4',
-  answer: 0,
+  answer: '',
   explanation: '',
 };
+
+const circledChoiceMap = new Map([
+  ['①', 0],
+  ['②', 1],
+  ['③', 2],
+  ['④', 3],
+  ['⑤', 4],
+]);
 
 function toFormQuestion(question) {
   return {
@@ -19,12 +27,14 @@ function toFormQuestion(question) {
     difficulty: question.difficulty ?? 'easy',
     score: question.score ?? 5,
     choicesText: (question.choices ?? []).join('\n'),
-    answer: question.answer ?? 0,
+    answer: question.answer ?? '',
     explanation: question.explanation ?? '',
   };
 }
 
 function toPayload(formQuestion) {
+  const answer = formQuestion.answer === '' ? null : Number(formQuestion.answer);
+
   return {
     title: formQuestion.title,
     content: formQuestion.content,
@@ -32,9 +42,68 @@ function toPayload(formQuestion) {
     difficulty: formQuestion.difficulty,
     score: Number(formQuestion.score),
     choices: formQuestion.choicesText.split('\n'),
-    answer: Number(formQuestion.answer),
+    answer,
     explanation: formQuestion.explanation,
   };
+}
+
+function cleanBulkText(text) {
+  return text
+    .replace(/```[a-z]*\n?/gi, '')
+    .replace(/```/g, '')
+    .replace(/\r\n/g, '\n')
+    .trim();
+}
+
+function findUnit(lines) {
+  const heading = [...lines].reverse().find((line) => (
+    /^[ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩ]+\.\s+/.test(line.trim())
+    || /CommonJS|ES Module|Module|모듈/.test(line)
+  ));
+
+  return heading?.replace(/^[ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩ]+\.\s+/, '').trim() || '가져오기와 내보내기';
+}
+
+function parseBulkQuestions(text) {
+  const source = cleanBulkText(text);
+  const questionPattern = /(^|\n)(\d{1,2})\.\s+([^\n]+)/g;
+  const matches = [...source.matchAll(questionPattern)];
+
+  return matches.map((match, index) => {
+    const start = match.index + match[1].length;
+    const end = matches[index + 1]?.index ?? source.length;
+    const previousText = source.slice(0, start);
+    const block = source.slice(start, end).trim();
+    const blockLines = block.split('\n').map((line) => line.trim()).filter(Boolean);
+    const title = blockLines[0].replace(/^\d{1,2}\.\s+/, '').trim();
+    const choices = [];
+    const contentLines = [];
+
+    for (const line of blockLines.slice(1)) {
+      const choiceMark = line[0];
+
+      if (circledChoiceMap.has(choiceMark)) {
+        choices.push(line.slice(1).trim().replace(/\s+/g, ' '));
+      } else if (!line.startsWith('선택지')) {
+        contentLines.push(line);
+      }
+    }
+
+    return {
+      title,
+      content: contentLines.join('\n').trim() || title,
+      unit: findUnit(previousText.split('\n')),
+      difficulty: 'medium',
+      score: 5,
+      choices,
+      answer: null,
+      explanation: '정답과 해설을 검토한 뒤 수정하세요.',
+    };
+  }).filter((question) => question.title && question.choices.length >= 2);
+}
+
+function isAnswerUndecided(question) {
+  return question.answer === null || question.answer === undefined || question.answer === '';
 }
 
 export default function TeacherQuestionManager({
@@ -47,6 +116,9 @@ export default function TeacherQuestionManager({
 }) {
   const [editingId, setEditingId] = useState(null);
   const [formQuestion, setFormQuestion] = useState(emptyQuestion);
+  const [bulkText, setBulkText] = useState('');
+  const [bulkQuestions, setBulkQuestions] = useState([]);
+  const [bulkError, setBulkError] = useState('');
   const selectedQuestion = useMemo(
     () => questions.find((question) => question.id === editingId) ?? null,
     [editingId, questions],
@@ -64,6 +136,41 @@ export default function TeacherQuestionManager({
   function resetForm() {
     setEditingId(null);
     setFormQuestion(emptyQuestion);
+  }
+
+  function loadBulkQuestion(question) {
+    setEditingId(null);
+    setFormQuestion(toFormQuestion(question));
+  }
+
+  function convertBulkText() {
+    const parsedQuestions = parseBulkQuestions(bulkText);
+
+    if (parsedQuestions.length === 0) {
+      setBulkError('문제를 찾지 못했습니다. 번호와 ①②③ 형식의 보기가 있는지 확인하세요.');
+      setBulkQuestions([]);
+      return;
+    }
+
+    setBulkError('');
+    setBulkQuestions(parsedQuestions);
+  }
+
+  async function saveBulkQuestions() {
+    const undecidedCount = bulkQuestions.filter(isAnswerUndecided).length;
+
+    if (undecidedCount > 0) {
+      setBulkError(`정답 미정 문제가 ${undecidedCount}개 있습니다. 미리보기에서 문제를 열어 정답을 선택한 뒤 저장하세요.`);
+      return;
+    }
+
+    for (const question of bulkQuestions) {
+      await onCreate(question);
+    }
+
+    setBulkText('');
+    setBulkQuestions([]);
+    setBulkError('');
   }
 
   async function handleSubmit(event) {
@@ -96,6 +203,43 @@ export default function TeacherQuestionManager({
         </div>
         <button className="nav-button" onClick={resetForm} type="button">새 문제</button>
       </div>
+
+      <section className="bulk-importer" aria-label="문제 붙여넣기 변환">
+        <div className="teacher-form-title">
+          <strong>통째 붙여넣기 변환</strong>
+          <div className="action-group">
+            <button className="nav-button" onClick={convertBulkText} type="button">변환</button>
+            <button className="submit-button" disabled={bulkQuestions.length === 0 || status === 'saving'} onClick={saveBulkQuestions} type="button">
+              {bulkQuestions.length}개 저장
+            </button>
+          </div>
+        </div>
+        <label className="answer-field">
+          <span>원문</span>
+          <textarea
+            className="bulk-textarea"
+            placeholder="번호가 붙은 객관식 문제 묶음을 그대로 붙여넣으세요."
+            value={bulkText}
+            onChange={(event) => setBulkText(event.target.value)}
+          />
+        </label>
+        {bulkError && <p className="teacher-error">{bulkError}</p>}
+        {bulkQuestions.length > 0 && (
+          <div className="bulk-preview">
+            {bulkQuestions.map((question, index) => (
+              <article className="bulk-preview-item" key={`${question.title}-${index}`}>
+                <button onClick={() => loadBulkQuestion(question)} type="button">
+                  <strong>{index + 1}. {question.title}</strong>
+                  <span>{question.unit} · 보기 {question.choices.length}개</span>
+                </button>
+                <span className={isAnswerUndecided(question) ? 'answer-status undecided' : 'answer-status decided'}>
+                  {isAnswerUndecided(question) ? '정답 미정' : `정답 ${question.answer + 1}번`}
+                </span>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
 
       <div className="teacher-grid">
         <aside className="teacher-question-list">
@@ -165,8 +309,13 @@ export default function TeacherQuestionManager({
           </label>
 
           <label className="answer-field">
-            <span>정답 번호 (0부터)</span>
-            <input min="0" type="number" value={formQuestion.answer} onChange={(event) => updateField('answer', event.target.value)} />
+            <span>정답 번호</span>
+            <select value={formQuestion.answer} onChange={(event) => updateField('answer', event.target.value)}>
+              <option value="">미정</option>
+              {formQuestion.choicesText.split('\n').filter((choice) => choice.trim()).map((choice, index) => (
+                <option key={`${choice}-${index}`} value={index}>{index + 1}번</option>
+              ))}
+            </select>
           </label>
 
           <label className="answer-field">

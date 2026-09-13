@@ -193,6 +193,16 @@ button, label { -webkit-tap-highlight-color: transparent; }
 .teacher-form-row { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(90px, .6fr) minmax(110px, .7fr); gap: 12px; }
 .teacher-save { justify-self: end; }
 .danger-button { padding: 9px 12px; border: 1px solid #e7b5a7; border-radius: 10px; color: #9c452f; background: #fff4ef; font-size: 12px; font-weight: 800; cursor: pointer; }
+.bulk-importer { display: grid; gap: 14px; margin: 0 0 18px; padding: 16px; border: 1px solid var(--line); border-radius: 16px; background: #fbfcf9; }
+.bulk-textarea { min-height: 230px; }
+.bulk-preview { display: grid; gap: 8px; max-height: 260px; overflow: auto; }
+.bulk-preview-item { display: grid; gap: 4px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+.bulk-preview-item button { display: grid; gap: 4px; padding: 0; border: 0; color: inherit; background: transparent; text-align: left; cursor: pointer; }
+.bulk-preview-item strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.bulk-preview-item span { color: var(--muted); font-size: 12px; }
+.answer-status { width: fit-content; padding: 4px 7px; border-radius: 8px; font-weight: 800; }
+.answer-status.undecided { color: #9c452f; background: #fff0ea; }
+.answer-status.decided { color: #155f48; background: #e9f7f0; }
 
 .state-card { min-height: 280px; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 30px; border: 1px solid var(--line); border-radius: 22px; background: white; color: var(--muted); }
 .state-card.error-state { flex-direction: column; color: #a54838; }
