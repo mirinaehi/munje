@@ -1,14 +1,19 @@
-export async function checkApiHealth() {
-  const response = await fetch('/api/health');
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') ?? '';
 
-  if (!response.ok) {
-    throw new Error('API health check failed');
-  }
-
-  return response.json();
+function apiUrl(path) {
+  return `${apiBaseUrl}${path}`;
 }
 
 async function parseResponse(response) {
+  const contentType = response.headers.get('content-type') ?? '';
+
+  if (!contentType.includes('application/json')) {
+    const fallbackText = await response.text();
+    const message = fallbackText.trim().slice(0, 120) || '빈 응답';
+
+    throw new Error(`API가 JSON을 반환하지 않았습니다. 배포 환경의 API 주소를 확인하세요. 응답: ${message}`);
+  }
+
   const data = await response.json();
 
   if (!response.ok) {
@@ -18,23 +23,28 @@ async function parseResponse(response) {
   return data;
 }
 
+export async function checkApiHealth() {
+  const response = await fetch(apiUrl('/api/health'));
+  return parseResponse(response);
+}
+
 export async function getQuestions() {
-  const response = await fetch('/api/questions');
+  const response = await fetch(apiUrl('/api/questions'));
   return parseResponse(response);
 }
 
 export async function getQuestionSets() {
-  const response = await fetch('/api/question-sets');
+  const response = await fetch(apiUrl('/api/question-sets'));
   return parseResponse(response);
 }
 
 export async function getQuestionSet(questionSetId) {
-  const response = await fetch(`/api/question-sets/${questionSetId}`);
+  const response = await fetch(apiUrl(`/api/question-sets/${questionSetId}`));
   return parseResponse(response);
 }
 
 export async function submitAnswer(questionId, answer) {
-  const response = await fetch(`/api/questions/${questionId}/check`, {
+  const response = await fetch(apiUrl(`/api/questions/${questionId}/check`), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ answer }),

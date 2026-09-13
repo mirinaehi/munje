@@ -1024,6 +1024,22 @@ npm run dev
 * 문제 세트 상세 응답에는 문제에서 사용하는 공통 지문 `contexts`가 포함된다.
 * 지원 문제 유형: 객관식, 단답형, 빈칸 채우기, SQL 작성형
 
+## 10.7 배포 환경 설정
+
+Vercel처럼 Frontend만 정적 배포하는 환경에서는 Vite 개발 서버의 `/api` 프록시가 동작하지 않는다.
+
+Frontend만 따로 배포하고 Backend를 별도 주소에 배포하는 경우, `client` 배포 환경변수에 Backend 주소를 설정한다.
+
+```text
+VITE_API_BASE_URL=https://배포된-백엔드-주소
+```
+
+로컬 개발에서는 값을 비워두면 기존처럼 Vite 프록시를 통해 `http://localhost:4000`으로 연결된다.
+
+Vercel에서 이 저장소의 루트 프로젝트를 배포하면 `api/[...path].js`가 Express 앱을 Serverless Function으로 연결한다.
+
+이 경우 `/api/question-sets` 같은 API 경로를 같은 도메인에서 호출할 수 있으므로 `VITE_API_BASE_URL`을 비워둘 수 있다.
+
 ---
 
 # 11. 예상 프로젝트 구조
