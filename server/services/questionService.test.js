@@ -7,7 +7,7 @@ import { getQuestionSet, getQuestionSets } from './questionSetService.js';
 import { isCorrectAnswer, toPublicQuestion } from './questionService.js';
 import { createSubmission } from './submissionService.js';
 import { getAssignedQuestionSetIds } from './assignmentService.js';
-import { getLearningAnalytics } from './analyticsService.js';
+import { getLearningAnalytics, getStudentLearningAnalytics } from './analyticsService.js';
 import {
   getTeacherAssignments,
   updateTeacherAssignment,
@@ -342,6 +342,56 @@ test('교사는 제출 기록 기반 학습 분석을 확인할 수 있다', asy
 
 test('학생은 학습 분석을 확인할 수 없다', async () => {
   const result = await getLearningAnalytics('student-minseo');
+
+  assert.equal(result.error.status, 403);
+});
+
+test('학생은 자신의 학습 기록을 확인할 수 있다', async () => {
+  const temporaryDirectory = await mkdtemp(path.join(os.tmpdir(), 'munje-student-analytics-'));
+  const submissionsPath = path.join(temporaryDirectory, 'submissions.json');
+  process.env.MUNJE_SUBMISSIONS_PATH = submissionsPath;
+  await writeFile(submissionsPath, JSON.stringify([
+    {
+      id: 'submission-student-test',
+      userId: 'student-minseo',
+      questionSetId: 'set-js-object-basics',
+      attempt: 1,
+      status: 'submitted',
+      submittedAt: '2026-09-13T00:00:00.000Z',
+      score: 5,
+      totalScore: 10,
+      answers: [
+        { questionId: 'q016', correct: true, score: 5, maxScore: 5 },
+        { questionId: 'q017', correct: false, score: 0, maxScore: 5 },
+      ],
+    },
+    {
+      id: 'submission-other-student',
+      userId: 'another-student',
+      questionSetId: 'set-js-object-basics',
+      attempt: 1,
+      status: 'submitted',
+      submittedAt: '2026-09-13T01:00:00.000Z',
+      score: 10,
+      totalScore: 10,
+      answers: [
+        { questionId: 'q016', correct: true, score: 5, maxScore: 5 },
+        { questionId: 'q017', correct: true, score: 5, maxScore: 5 },
+      ],
+    },
+  ], null, 2));
+
+  const analytics = await getStudentLearningAnalytics('student-minseo');
+
+  assert.equal(analytics.summary.submissionCount, 1);
+  assert.equal(analytics.summary.accuracy, 50);
+  assert.equal(analytics.missedQuestions[0].questionId, 'q017');
+
+  delete process.env.MUNJE_SUBMISSIONS_PATH;
+});
+
+test('교사는 학생 전용 학습 기록을 확인할 수 없다', async () => {
+  const result = await getStudentLearningAnalytics('teacher-hyun');
 
   assert.equal(result.error.status, 403);
 });

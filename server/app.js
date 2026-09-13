@@ -14,6 +14,12 @@ const app = express();
 
 app.use(cors());
 app.use(express.json({ limit: '1mb' }));
+app.get('/', (_request, response) => {
+  response.json({
+    ok: true,
+    message: 'Munje API 서버가 실행 중입니다.',
+  });
+});
 app.use('/api/analytics', analyticsRouter);
 app.use('/api/health', healthRouter);
 app.use('/api/question-sets', questionSetsRouter);

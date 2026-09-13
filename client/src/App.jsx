@@ -4,6 +4,7 @@ import Icon from './components/Icon.jsx';
 import QuestionList from './components/QuestionList.jsx';
 import QuestionPanel from './components/QuestionPanel.jsx';
 import QuestionSetSelector from './components/QuestionSetSelector.jsx';
+import StudentLearningRecord from './components/StudentLearningRecord.jsx';
 import TeacherAnalyticsPanel from './components/TeacherAnalyticsPanel.jsx';
 import TeacherAssignmentManager from './components/TeacherAssignmentManager.jsx';
 import TeacherQuestionManager from './components/TeacherQuestionManager.jsx';
@@ -16,6 +17,7 @@ import {
   deleteTeacherQuestion,
   getTeacherAssignments,
   getLearningAnalytics,
+  getStudentLearningAnalytics,
   getTeacherQuestionSets,
   getTeacherQuestions,
   updateTeacherQuestionSet,
@@ -46,6 +48,9 @@ function App() {
   const [analytics, setAnalytics] = useState(null);
   const [analyticsStatus, setAnalyticsStatus] = useState('idle');
   const [analyticsError, setAnalyticsError] = useState('');
+  const [studentAnalytics, setStudentAnalytics] = useState(null);
+  const [studentAnalyticsStatus, setStudentAnalyticsStatus] = useState('idle');
+  const [studentAnalyticsError, setStudentAnalyticsError] = useState('');
   const [status, setStatus] = useState('loading');
   const [error, setError] = useState('');
 
@@ -127,6 +132,12 @@ function App() {
       });
   }, [currentUser]);
 
+  useEffect(() => {
+    if (currentUser?.role !== 'student') return;
+
+    reloadStudentAnalytics(currentUser.id);
+  }, [currentUser]);
+
   const questions = currentSet?.questions ?? [];
   const contexts = currentSet?.contexts ?? [];
   const selectedIndex = questions.findIndex((question) => question.id === selectedId);
@@ -168,6 +179,7 @@ function App() {
 
       setSubmission(savedSubmission);
       setSubmissionStatus('saved');
+      await reloadStudentAnalytics(currentUser.id);
     } catch (submitError) {
       setSubmissionError(submitError.message);
       setSubmissionStatus('error');
@@ -252,6 +264,21 @@ function App() {
     } catch (loadError) {
       setAnalyticsError(loadError.message);
       setAnalyticsStatus('idle');
+    }
+  }
+
+  async function reloadStudentAnalytics(userId = currentUser?.id) {
+    if (!userId) return;
+
+    setStudentAnalyticsStatus('loading');
+    setStudentAnalyticsError('');
+
+    try {
+      setStudentAnalytics(await getStudentLearningAnalytics(userId));
+      setStudentAnalyticsStatus('idle');
+    } catch (loadError) {
+      setStudentAnalyticsError(loadError.message);
+      setStudentAnalyticsStatus('idle');
     }
   }
 
@@ -437,6 +464,15 @@ function App() {
               onRefresh={reloadAnalytics}
             />
           </>
+        )}
+
+        {isStudent && (
+          <StudentLearningRecord
+            analytics={studentAnalytics}
+            status={studentAnalyticsStatus}
+            error={studentAnalyticsError}
+            onRefresh={() => reloadStudentAnalytics(currentUser.id)}
+          />
         )}
 
         {status === 'loading' && <div className="state-card"><span className="loader" />문제 세트 목록을 불러오고 있어요.</div>}

@@ -12,6 +12,15 @@ async function requireTeacher(userId) {
   return { user };
 }
 
+async function requireStudent(userId) {
+  const user = await getRequiredUser(userId);
+
+  if (!user) return { error: { status: 404, message: '사용자를 찾을 수 없습니다.' } };
+  if (user.role !== 'student') return { error: { status: 403, message: '학생만 자신의 학습 기록을 확인할 수 있습니다.' } };
+
+  return { user };
+}
+
 function toPercent(numerator, denominator) {
   if (denominator === 0) return 0;
   return Math.round((numerator / denominator) * 100);
@@ -123,5 +132,85 @@ export async function getLearningAnalytics(userId) {
     studentStats,
     unitStats,
     recentSubmissions,
+  };
+}
+
+export async function getStudentLearningAnalytics(userId) {
+  const authorization = await requireStudent(userId);
+  if (authorization.error) return authorization;
+
+  const [submissions, questions] = await Promise.all([
+    findAllSubmissions(),
+    findAllQuestions(),
+  ]);
+  const questionMap = new Map(questions.map((question) => [question.id, question]));
+  const studentSubmissions = submissions.filter((submission) => submission.userId === authorization.user.id);
+  const unitStatsMap = new Map();
+  const missedQuestionsMap = new Map();
+  let answerCount = 0;
+  let correctCount = 0;
+  let score = 0;
+  let totalScore = 0;
+
+  for (const submission of studentSubmissions) {
+    score += submission.score;
+    totalScore += submission.totalScore;
+
+    for (const answer of submission.answers) {
+      const question = questionMap.get(answer.questionId);
+      const unit = question?.unit ?? '미분류';
+      const unitStats = getOrCreate(unitStatsMap, unit, () => ({
+        unit,
+        attempts: 0,
+        correctCount: 0,
+      }));
+
+      answerCount += 1;
+      unitStats.attempts += 1;
+
+      if (answer.correct) {
+        correctCount += 1;
+        unitStats.correctCount += 1;
+      } else {
+        const missedQuestion = getOrCreate(missedQuestionsMap, answer.questionId, () => ({
+          questionId: answer.questionId,
+          title: question?.title ?? answer.questionId,
+          unit,
+          missedCount: 0,
+        }));
+
+        missedQuestion.missedCount += 1;
+      }
+    }
+  }
+
+  return {
+    summary: {
+      submissionCount: studentSubmissions.length,
+      answerCount,
+      correctCount,
+      accuracy: toPercent(correctCount, answerCount),
+      scoreRate: toPercent(score, totalScore),
+    },
+    unitStats: [...unitStatsMap.values()].map((stat) => ({
+      ...stat,
+      accuracy: toPercent(stat.correctCount, stat.attempts),
+    })).sort((left, right) => left.accuracy - right.accuracy),
+    missedQuestions: [...missedQuestionsMap.values()]
+      .sort((left, right) => right.missedCount - left.missedCount)
+      .slice(0, 8),
+    recentSubmissions: studentSubmissions
+      .slice()
+      .sort((left, right) => String(right.submittedAt).localeCompare(String(left.submittedAt)))
+      .slice(0, 6)
+      .map((submission) => ({
+        id: submission.id,
+        questionSetId: submission.questionSetId,
+        attempt: submission.attempt,
+        score: submission.score,
+        totalScore: submission.totalScore,
+        scoreRate: toPercent(submission.score, submission.totalScore),
+        submittedAt: submission.submittedAt,
+      })),
   };
 }

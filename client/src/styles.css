@@ -225,6 +225,9 @@ button, label { -webkit-tap-highlight-color: transparent; }
 .analytics-row span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: 12px; }
 .analytics-row strong { color: var(--green); font-size: 12px; }
 .analytics-empty { min-height: 120px; }
+.student-record { margin: 0 0 24px; padding: clamp(20px, 4vw, 28px); border: 1px solid var(--line); border-radius: 20px; background: rgba(255, 255, 255, .92); box-shadow: 0 14px 42px rgba(34, 48, 43, .06); }
+.student-record-heading { display: flex; align-items: start; justify-content: space-between; gap: 18px; margin-bottom: 16px; }
+.student-record-heading h2 { margin: 0; font-size: 22px; letter-spacing: -.04em; }
 
 .state-card { min-height: 280px; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 30px; border: 1px solid var(--line); border-radius: 22px; background: white; color: var(--muted); }
 .state-card.error-state { flex-direction: column; color: #a54838; }

@@ -165,3 +165,8 @@ export async function getLearningAnalytics(userId) {
   const response = await fetch(apiUrl(`/api/analytics?userId=${encodeURIComponent(userId)}`));
   return parseResponse(response);
 }
+
+export async function getStudentLearningAnalytics(userId) {
+  const response = await fetch(apiUrl(`/api/analytics/student?userId=${encodeURIComponent(userId)}`));
+  return parseResponse(response);
+}
