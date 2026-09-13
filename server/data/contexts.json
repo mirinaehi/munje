@@ -1,27 +1,42 @@
 [
   {
-    "id": "context-js-user-profiles",
-    "type": "code",
-    "title": "다음 코드를 보고 16~20번에 답하시오.",
-    "language": "javascript",
-    "content": "const USER_PROFILES = {\n  jin: {\n    id: \"jin\",\n    name: \"Jin\",\n    level: \"beginner\",\n    favoriteTopic: \"Node.js modules\",\n  },\n\n  mina: {\n    id: \"mina\",\n    name: \"Mina\",\n    level: \"intermediate\",\n    favoriteTopic: \"Express Router\",\n  },\n};\n\nconst DEFAULT_USER_PROFILE = USER_PROFILES.jin;\n\nconst userProfiles = Object.values(USER_PROFILES);\n\nfunction resolveUserProfile(profileId) {\n  return USER_PROFILES[profileId] ?? DEFAULT_USER_PROFILE;\n}\n\nfunction introduce(profile) {\n  return `${profile.name}님은 ${profile.favoriteTopic}를 배우는 ${profile.level} 학습자입니다.`;\n}"
-  },
-  {
-    "id": "context-library-schema",
+    "id": "context-sql-library-rental-schema",
     "type": "database-schema",
     "title": "도서 대여 데이터베이스 구조",
     "tables": [
       {
         "name": "도서",
-        "columns": ["도서번호", "제목", "분류", "가격", "출판사", "출판일", "재고"]
+        "columns": [
+          "도서번호",
+          "제목",
+          "분류",
+          "가격",
+          "출판사",
+          "출판일",
+          "재고"
+        ]
       },
       {
         "name": "회원",
-        "columns": ["회원번호", "이름", "도시", "전화번호", "가입일", "활성여부"]
+        "columns": [
+          "회원번호",
+          "이름",
+          "도시",
+          "전화번호",
+          "가입일",
+          "활성여부"
+        ]
       },
       {
         "name": "대여",
-        "columns": ["대여번호", "회원번호", "도서번호", "대여일", "반납일", "연체료"]
+        "columns": [
+          "대여번호",
+          "회원번호",
+          "도서번호",
+          "대여일",
+          "반납일",
+          "연체료"
+        ]
       }
     ],
     "relationships": [
@@ -30,9 +45,85 @@
     ]
   },
   {
-    "id": "context-learning-flow",
-    "type": "text",
-    "title": "문제 풀이 흐름",
-    "content": "학생은 문제를 확인한 뒤 답안을 작성하고 제출합니다. 서버는 제출된 답안을 채점하고, 학생은 결과와 해설을 확인합니다."
+    "id": "context-sql-commerce-schema",
+    "type": "database-schema",
+    "title": "회원 주문 데이터베이스 구조",
+    "tables": [
+      {
+        "name": "회원",
+        "columns": [
+          "회원번호",
+          "이름",
+          "지역",
+          "등급",
+          "포인트",
+          "쿠폰여부"
+        ]
+      },
+      {
+        "name": "주문",
+        "columns": [
+          "주문번호",
+          "회원번호",
+          "주문금액",
+          "주문일"
+        ]
+      },
+      {
+        "name": "상품",
+        "columns": [
+          "상품번호",
+          "상품명",
+          "분류",
+          "가격",
+          "재고"
+        ]
+      },
+      {
+        "name": "직원",
+        "columns": [
+          "직원번호",
+          "이름",
+          "부서",
+          "급여",
+          "사무실"
+        ]
+      },
+      {
+        "name": "부서",
+        "columns": [
+          "부서",
+          "사무실",
+          "관리자"
+        ]
+      },
+      {
+        "name": "우수회원",
+        "columns": [
+          "회원번호",
+          "이름",
+          "포인트"
+        ]
+      },
+      {
+        "name": "쿠폰대상",
+        "columns": [
+          "회원번호"
+        ]
+      },
+      {
+        "name": "탈퇴대상",
+        "columns": [
+          "회원번호"
+        ]
+      }
+    ],
+    "relationships": [
+      "회원.회원번호 = 주문.회원번호",
+      "직원.부서 = 부서.부서",
+      "우수회원.회원번호 = 회원.회원번호",
+      "쿠폰대상.회원번호 = 회원.회원번호",
+      "탈퇴대상.회원번호 = 회원.회원번호"
+    ]
   }
 ]

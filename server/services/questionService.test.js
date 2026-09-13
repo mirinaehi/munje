@@ -3,6 +3,8 @@ import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
+import { findAllQuestions } from '../repositories/questionRepository.js';
+import { findQuestionSetById } from '../repositories/questionSetRepository.js';
 import { getQuestionSet, getQuestionSets } from './questionSetService.js';
 import { isCorrectAnswer, toPublicQuestion } from './questionService.js';
 import { createSubmission } from './submissionService.js';
@@ -104,9 +106,9 @@ test('SQL 답안을 기본 정규화 후 채점한다', () => {
 test('공개된 문제 세트 목록을 요약해서 제공한다', async () => {
   const questionSets = await getQuestionSets();
 
-  assert.equal(questionSets.length, 3);
-  assert.equal(questionSets[0].id, 'set-js-object-basics');
-  assert.equal(questionSets[0].questionCount, 5);
+  assert.equal(questionSets.length, 2);
+  assert.equal(questionSets[0].id, 'set-sql-library-rental');
+  assert.equal(questionSets[0].questionCount, 25);
 });
 
 test('학생에게 배정된 문제 세트만 제공한다', async () => {
@@ -114,30 +116,29 @@ test('학생에게 배정된 문제 세트만 제공한다', async () => {
 
   assert.deepEqual(
     questionSets.map((questionSet) => questionSet.id),
-    ['set-js-object-basics', 'set-sql-select-basics', 'set-learning-flow'],
+    ['set-sql-library-rental', 'set-sql-subquery-view'],
   );
 });
 
 test('문제 세트의 문제를 지정된 순서대로 제공한다', async () => {
-  const questionSet = await getQuestionSet('set-js-object-basics');
+  const questionSet = await getQuestionSet('set-sql-library-rental');
 
-  assert.equal(questionSet.totalScore, 25);
-  assert.deepEqual(questionSet.questions.map((question) => question.id), ['q016', 'q017', 'q018', 'q019', 'q020']);
+  assert.equal(questionSet.totalScore, 250);
+  assert.deepEqual(questionSet.questions.slice(0, 3).map((question) => question.id), ['sql-book-001', 'sql-book-002', 'sql-book-003']);
   assert.equal('answer' in questionSet.questions[0], false);
-  assert.equal('acceptedAnswers' in questionSet.questions[3], false);
-  assert.equal('answers' in questionSet.questions[4].blanks[0], false);
+  assert.equal('acceptedAnswers' in questionSet.questions[0], false);
 });
 
 test('문제 세트의 공통 지문을 중복 없이 제공한다', async () => {
-  const questionSet = await getQuestionSet('set-js-object-basics');
+  const questionSet = await getQuestionSet('set-sql-library-rental');
 
   assert.equal(questionSet.contexts.length, 1);
-  assert.equal(questionSet.contexts[0].id, 'context-js-user-profiles');
-  assert.equal(questionSet.questions.every((question) => question.contextId === 'context-js-user-profiles'), true);
+  assert.equal(questionSet.contexts[0].id, 'context-sql-library-rental-schema');
+  assert.equal(questionSet.questions.every((question) => question.contextId === 'context-sql-library-rental-schema'), true);
 });
 
 test('데이터베이스 구조 지문을 SQL 세트에 제공한다', async () => {
-  const questionSet = await getQuestionSet('set-sql-select-basics');
+  const questionSet = await getQuestionSet('set-sql-library-rental');
 
   assert.equal(questionSet.contexts[0].type, 'database-schema');
   assert.equal(questionSet.contexts[0].tables.length, 3);
@@ -148,25 +149,25 @@ test('문제 세트 제출을 채점하고 JSON 파일에 저장한다', async (
   const submissionsPath = path.join(temporaryDirectory, 'submissions.json');
   process.env.MUNJE_SUBMISSIONS_PATH = submissionsPath;
   await writeFile(submissionsPath, '[]\n');
+  const questionSet = await findQuestionSetById('set-sql-library-rental');
+  const questions = await findAllQuestions();
+  const questionMap = new Map(questions.map((question) => [question.id, question]));
 
   const result = await createSubmission({
     userId: 'student-minseo',
-    questionSetId: 'set-js-object-basics',
-    answers: [
-      { questionId: 'q016', answer: 1 },
-      { questionId: 'q017', answer: 4 },
-      { questionId: 'q018', answer: 3 },
-      { questionId: 'q019', answer: 'Jin' },
-      { questionId: 'q020', answer: { fallback: 'DEFAULT_USER_PROFILE' } },
-    ],
+    questionSetId: 'set-sql-library-rental',
+    answers: questionSet.questions.map((questionId) => ({
+      questionId,
+      answer: questionMap.get(questionId).answer,
+    })),
   });
 
   const savedSubmissions = JSON.parse(await readFile(submissionsPath, 'utf8'));
 
   assert.equal(result.submission.userId, 'student-minseo');
   assert.equal(result.submission.attempt, 1);
-  assert.equal(result.submission.answers.length, 5);
-  assert.equal(result.submission.score, 25);
+  assert.equal(result.submission.answers.length, 25);
+  assert.equal(result.submission.score, 250);
   assert.equal(savedSubmissions.length, 1);
   assert.equal(savedSubmissions[0].id, result.submission.id);
 
@@ -186,9 +187,9 @@ test('임시 사용자 목록과 현재 사용자를 공개 정보로 제공한�
 test('교사 계정은 문제 세트를 제출할 수 없다', async () => {
   const result = await createSubmission({
     userId: 'teacher-hyun',
-    questionSetId: 'set-js-object-basics',
+    questionSetId: 'set-sql-library-rental',
     answers: [
-      { questionId: 'q016', answer: 1 },
+      { questionId: 'sql-book-001', answer: 'SELECT 제목, 가격 FROM 도서 WHERE 가격 >= 15000;' },
     ],
   });
 
@@ -251,14 +252,14 @@ test('교사는 문제 세트를 생성, 수정, 삭제할 수 있다', async ()
   const created = await createTeacherQuestionSet('teacher-hyun', {
     title: '테스트 세트',
     description: '테스트용 문제 세트입니다.',
-    questions: ['q016', 'q017'],
+    questions: ['sql-book-001', 'sql-book-002'],
     isPublished: false,
   });
   const listed = await getTeacherQuestionSets('teacher-hyun');
   const updated = await updateTeacherQuestionSet('teacher-hyun', created.questionSet.id, {
     ...created.questionSet,
     title: '수정된 테스트 세트',
-    questions: ['q017', 'q016'],
+    questions: ['sql-book-002', 'sql-book-001'],
     isPublished: true,
   });
   const deleted = await deleteTeacherQuestionSet('teacher-hyun', created.questionSet.id);
@@ -266,7 +267,7 @@ test('교사는 문제 세트를 생성, 수정, 삭제할 수 있다', async ()
 
   assert.equal(created.questionSet.createdBy, 'teacher-hyun');
   assert.equal(listed.questionSets.length, 1);
-  assert.deepEqual(updated.questionSet.questions, ['q017', 'q016']);
+  assert.deepEqual(updated.questionSet.questions, ['sql-book-002', 'sql-book-001']);
   assert.equal(updated.questionSet.isPublished, true);
   assert.equal(deleted.deletedId, created.questionSet.id);
   assert.equal(savedQuestionSets.length, 0);
@@ -278,7 +279,7 @@ test('학생은 문제 세트를 관리할 수 없다', async () => {
   const result = await createTeacherQuestionSet('student-minseo', {
     title: '권한 없는 세트',
     description: '학생은 만들 수 없습니다.',
-    questions: ['q016'],
+    questions: ['sql-book-001'],
   });
 
   assert.equal(result.error.status, 403);
@@ -291,20 +292,20 @@ test('교사는 학생에게 문제 세트를 배정할 수 있다', async () =>
   await writeFile(assignmentsPath, '[]\n');
 
   const listed = await getTeacherAssignments('teacher-hyun');
-  const updated = await updateTeacherAssignment('teacher-hyun', 'student-minseo', ['set-js-object-basics']);
+  const updated = await updateTeacherAssignment('teacher-hyun', 'student-minseo', ['set-sql-library-rental']);
   const assignedQuestionSetIds = await getAssignedQuestionSetIds('student-minseo');
   const savedAssignments = JSON.parse(await readFile(assignmentsPath, 'utf8'));
 
   assert.equal(listed.assignments[0].userId, 'student-minseo');
-  assert.deepEqual(updated.assignment.questionSetIds, ['set-js-object-basics']);
-  assert.deepEqual(assignedQuestionSetIds, ['set-js-object-basics']);
+  assert.deepEqual(updated.assignment.questionSetIds, ['set-sql-library-rental']);
+  assert.deepEqual(assignedQuestionSetIds, ['set-sql-library-rental']);
   assert.equal(savedAssignments.length, 1);
 
   delete process.env.MUNJE_ASSIGNMENTS_PATH;
 });
 
 test('학생은 문제 세트를 배정할 수 없다', async () => {
-  const result = await updateTeacherAssignment('student-minseo', 'student-minseo', ['set-js-object-basics']);
+  const result = await updateTeacherAssignment('student-minseo', 'student-minseo', ['set-sql-library-rental']);
 
   assert.equal(result.error.status, 403);
 });
@@ -317,15 +318,15 @@ test('교사는 제출 기록 기반 학습 분석을 확인할 수 있다', asy
     {
       id: 'submission-test',
       userId: 'student-minseo',
-      questionSetId: 'set-js-object-basics',
+      questionSetId: 'set-sql-library-rental',
       attempt: 1,
       status: 'submitted',
       submittedAt: '2026-09-13T00:00:00.000Z',
       score: 5,
       totalScore: 10,
       answers: [
-        { questionId: 'q016', correct: true, score: 5, maxScore: 5 },
-        { questionId: 'q017', correct: false, score: 0, maxScore: 5 },
+        { questionId: 'sql-book-001', correct: true, score: 10, maxScore: 10 },
+        { questionId: 'sql-book-002', correct: false, score: 0, maxScore: 10 },
       ],
     },
   ], null, 2));
@@ -335,7 +336,7 @@ test('교사는 제출 기록 기반 학습 분석을 확인할 수 있다', asy
   assert.equal(analytics.summary.submissionCount, 1);
   assert.equal(analytics.summary.averageScoreRate, 50);
   assert.equal(analytics.studentStats[0].name, '민서');
-  assert.equal(analytics.questionStats.find((stat) => stat.questionId === 'q017').accuracy, 0);
+  assert.equal(analytics.questionStats.find((stat) => stat.questionId === 'sql-book-002').accuracy, 0);
 
   delete process.env.MUNJE_SUBMISSIONS_PATH;
 });
@@ -354,29 +355,29 @@ test('학생은 자신의 학습 기록을 확인할 수 있다', async () => {
     {
       id: 'submission-student-test',
       userId: 'student-minseo',
-      questionSetId: 'set-js-object-basics',
+      questionSetId: 'set-sql-library-rental',
       attempt: 1,
       status: 'submitted',
       submittedAt: '2026-09-13T00:00:00.000Z',
       score: 5,
       totalScore: 10,
       answers: [
-        { questionId: 'q016', correct: true, score: 5, maxScore: 5 },
-        { questionId: 'q017', correct: false, score: 0, maxScore: 5 },
+        { questionId: 'sql-book-001', correct: true, score: 10, maxScore: 10 },
+        { questionId: 'sql-book-002', correct: false, score: 0, maxScore: 10 },
       ],
     },
     {
       id: 'submission-other-student',
       userId: 'another-student',
-      questionSetId: 'set-js-object-basics',
+      questionSetId: 'set-sql-library-rental',
       attempt: 1,
       status: 'submitted',
       submittedAt: '2026-09-13T01:00:00.000Z',
       score: 10,
       totalScore: 10,
       answers: [
-        { questionId: 'q016', correct: true, score: 5, maxScore: 5 },
-        { questionId: 'q017', correct: true, score: 5, maxScore: 5 },
+        { questionId: 'sql-book-001', correct: true, score: 10, maxScore: 10 },
+        { questionId: 'sql-book-002', correct: true, score: 10, maxScore: 10 },
       ],
     },
   ], null, 2));
@@ -385,7 +386,7 @@ test('학생은 자신의 학습 기록을 확인할 수 있다', async () => {
 
   assert.equal(analytics.summary.submissionCount, 1);
   assert.equal(analytics.summary.accuracy, 50);
-  assert.equal(analytics.missedQuestions[0].questionId, 'q017');
+  assert.equal(analytics.missedQuestions[0].questionId, 'sql-book-002');
 
   delete process.env.MUNJE_SUBMISSIONS_PATH;
 });
