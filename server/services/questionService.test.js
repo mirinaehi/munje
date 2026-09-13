@@ -6,6 +6,7 @@ import test from 'node:test';
 import { getQuestionSet, getQuestionSets } from './questionSetService.js';
 import { isCorrectAnswer, toPublicQuestion } from './questionService.js';
 import { createSubmission } from './submissionService.js';
+import { getCurrentUser, getUsers } from './userService.js';
 
 const sampleQuestion = {
   id: 'q001',
@@ -122,7 +123,7 @@ test('문제 세트 제출을 채점하고 JSON 파일에 저장한다', async (
   await writeFile(submissionsPath, '[]\n');
 
   const result = await createSubmission({
-    userId: 'student-test',
+    userId: 'student-minseo',
     questionSetId: 'set-js-object-basics',
     answers: [
       { questionId: 'q016', answer: 1 },
@@ -135,7 +136,7 @@ test('문제 세트 제출을 채점하고 JSON 파일에 저장한다', async (
 
   const savedSubmissions = JSON.parse(await readFile(submissionsPath, 'utf8'));
 
-  assert.equal(result.submission.userId, 'student-test');
+  assert.equal(result.submission.userId, 'student-minseo');
   assert.equal(result.submission.attempt, 1);
   assert.equal(result.submission.answers.length, 5);
   assert.equal(result.submission.score, 25);
@@ -143,4 +144,26 @@ test('문제 세트 제출을 채점하고 JSON 파일에 저장한다', async (
   assert.equal(savedSubmissions[0].id, result.submission.id);
 
   delete process.env.MUNJE_SUBMISSIONS_PATH;
+});
+
+test('임시 사용자 목록과 현재 사용자를 공개 정보로 제공한다', async () => {
+  const users = await getUsers();
+  const currentUser = await getCurrentUser();
+
+  assert.equal(users.length, 2);
+  assert.equal(currentUser.id, 'student-minseo');
+  assert.equal(currentUser.role, 'student');
+  assert.equal('email' in currentUser, false);
+});
+
+test('교사 계정은 문제 세트를 제출할 수 없다', async () => {
+  const result = await createSubmission({
+    userId: 'teacher-hyun',
+    questionSetId: 'set-js-object-basics',
+    answers: [
+      { questionId: 'q016', answer: 1 },
+    ],
+  });
+
+  assert.equal(result.error.status, 403);
 });

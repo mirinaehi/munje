@@ -4,6 +4,7 @@ import { healthRouter } from './routes/health.js';
 import { questionSetsRouter } from './routes/questionSets.js';
 import { questionsRouter } from './routes/questions.js';
 import { submissionsRouter } from './routes/submissions.js';
+import { usersRouter } from './routes/users.js';
 
 const app = express();
 
@@ -13,6 +14,7 @@ app.use('/api/health', healthRouter);
 app.use('/api/question-sets', questionSetsRouter);
 app.use('/api/questions', questionsRouter);
 app.use('/api/submissions', submissionsRouter);
+app.use('/api/users', usersRouter);
 
 app.use((error, _request, response, _next) => {
   console.error(error);

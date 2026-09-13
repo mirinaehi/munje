@@ -33,7 +33,7 @@
 
 ### 1.5 현재 개발 상태
 
-* 6단계 — 답안 및 제출 저장 완료
+* 7단계 — 사용자 기능 완료
 
 ---
 
@@ -1022,6 +1022,8 @@ npm run dev
 * 문제 세트 목록: `GET /api/question-sets`
 * 문제 세트 상세: `GET /api/question-sets/:id`
 * 문제 세트 제출 저장: `POST /api/submissions`
+* 임시 사용자 목록: `GET /api/users`
+* 현재 임시 사용자: `GET /api/users/current`
 * 문제 세트 상세 응답에는 문제에서 사용하는 공통 지문 `contexts`가 포함된다.
 * 지원 문제 유형: 객관식, 단답형, 빈칸 채우기, SQL 작성형
 

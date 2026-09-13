@@ -12,6 +12,7 @@ export default function QuestionPanel({
   hasPrevious,
   hasNext,
   positionLabel,
+  disabled = false,
 }) {
   const [answer, setAnswer] = useState(getInitialAnswer(question, result));
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -24,7 +25,7 @@ export default function QuestionPanel({
 
   async function handleSubmit(event) {
     event.preventDefault();
-    if (isAnswerEmpty(question, answer) || result) return;
+    if (disabled || isAnswerEmpty(question, answer) || result) return;
 
     setIsSubmitting(true);
     setError('');
@@ -56,7 +57,7 @@ export default function QuestionPanel({
 
         <AnswerInput
           answer={answer}
-          disabled={Boolean(result) || isSubmitting}
+          disabled={disabled || Boolean(result) || isSubmitting}
           onChange={setAnswer}
           question={question}
           result={result}
@@ -78,13 +79,13 @@ export default function QuestionPanel({
         {error && <p className="error-message" role="alert">{error}</p>}
 
         <div className="submit-row">
-          <p>{positionLabel} · {result ? '다음 문제로 이동할 수 있어요.' : '답안을 입력한 뒤 제출하면 바로 확인할 수 있어요.'}</p>
+          <p>{positionLabel} · {disabled ? '교사 계정은 풀이 내용을 검토할 수만 있어요.' : result ? '다음 문제로 이동할 수 있어요.' : '답안을 입력한 뒤 제출하면 바로 확인할 수 있어요.'}</p>
           <div className="action-group">
             <button className="nav-button" disabled={!hasPrevious} onClick={onPrevious} type="button">
               <Icon name="back" size={17} />
               이전
             </button>
-            <button className="submit-button" disabled={isAnswerEmpty(question, answer) || isSubmitting || Boolean(result)} type="submit">
+            <button className="submit-button" disabled={disabled || isAnswerEmpty(question, answer) || isSubmitting || Boolean(result)} type="submit">
               {isSubmitting ? '채점 중…' : result ? '제출 완료' : '답안 제출'}
               {!result && <Icon name="arrow" size={18} />}
             </button>

@@ -43,6 +43,17 @@ export async function getQuestionSet(questionSetId) {
   return parseResponse(response);
 }
 
+export async function getUsers() {
+  const response = await fetch(apiUrl('/api/users'));
+  return parseResponse(response);
+}
+
+export async function getCurrentUser(userId) {
+  const query = userId ? `?userId=${encodeURIComponent(userId)}` : '';
+  const response = await fetch(apiUrl(`/api/users/current${query}`));
+  return parseResponse(response);
+}
+
 export async function submitAnswer(questionId, answer) {
   const response = await fetch(apiUrl(`/api/questions/${questionId}/check`), {
     method: 'POST',

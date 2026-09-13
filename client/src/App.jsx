@@ -4,9 +4,11 @@ import Icon from './components/Icon.jsx';
 import QuestionList from './components/QuestionList.jsx';
 import QuestionPanel from './components/QuestionPanel.jsx';
 import QuestionSetSelector from './components/QuestionSetSelector.jsx';
-import { getQuestionSet, getQuestionSets, submitQuestionSet } from './services/api.js';
+import { getCurrentUser, getQuestionSet, getQuestionSets, getUsers, submitQuestionSet } from './services/api.js';
 
 function App() {
+  const [users, setUsers] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
   const [questionSets, setQuestionSets] = useState([]);
   const [selectedSetId, setSelectedSetId] = useState(null);
   const [currentSet, setCurrentSet] = useState(null);
@@ -19,11 +21,16 @@ function App() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    getQuestionSets()
-      .then((data) => {
-        setQuestionSets(data);
-        setSelectedSetId(data[0]?.id ?? null);
-        setStatus(data.length === 0 ? 'ready' : 'loading-set');
+    Promise.all([getUsers(), getCurrentUser()])
+      .then(([userData, user]) => {
+        setUsers(userData);
+        setCurrentUser(user);
+        return getQuestionSets();
+      })
+      .then((questionSetData) => {
+        setQuestionSets(questionSetData);
+        setSelectedSetId(questionSetData[0]?.id ?? null);
+        setStatus(questionSetData.length === 0 ? 'ready' : 'loading-set');
       })
       .catch((loadError) => {
         setError(loadError.message);
@@ -62,6 +69,7 @@ function App() {
   const solvedCount = Object.keys(results).length;
   const totalScore = Object.values(results).reduce((sum, result) => sum + (result.correct ? result.score : 0), 0);
   const isComplete = questions.length > 0 && solvedCount === questions.length;
+  const isStudent = currentUser?.role === 'student';
 
   function recordResult(result) {
     setResults((current) => ({ ...current, [result.questionId]: result }));
@@ -73,14 +81,14 @@ function App() {
   }
 
   async function submitCurrentSet() {
-    if (!currentSet || !isComplete || submissionStatus === 'saving') return;
+    if (!currentSet || !isComplete || !isStudent || submissionStatus === 'saving') return;
 
     setSubmissionStatus('saving');
     setSubmissionError('');
 
     try {
       const savedSubmission = await submitQuestionSet({
-        userId: 'student-minseo',
+        userId: currentUser.id,
         questionSetId: currentSet.id,
         answers: questions.map((question) => ({
           questionId: question.id,
@@ -96,6 +104,33 @@ function App() {
     }
   }
 
+  async function selectUser(userId) {
+    setStatus('loading');
+    setSubmission(null);
+    setSubmissionStatus('idle');
+    setSubmissionError('');
+    setResults({});
+
+    try {
+      const user = await getCurrentUser(userId);
+      setCurrentUser(user);
+
+      if (!selectedSetId) {
+        setStatus('ready');
+        return;
+      }
+
+      setStatus('loading-set');
+      const questionSet = await getQuestionSet(selectedSetId);
+      setCurrentSet(questionSet);
+      setSelectedId(questionSet.questions[0]?.id ?? null);
+      setStatus('ready');
+    } catch (loadError) {
+      setError(loadError.message);
+      setStatus('error');
+    }
+  }
+
   return (
     <div className="app">
       <header className="topbar">
@@ -103,8 +138,8 @@ function App() {
           <span className="brand-mark">문</span>
           <span>문제</span>
         </a>
-        <div className="step-label"><span /> 6단계 · 제출 저장</div>
-        <div className="profile"><span>학생</span><strong>민서</strong><span className="avatar">민</span></div>
+        <div className="step-label"><span /> 7단계 · 사용자 역할</div>
+        <div className="profile"><span>{currentUser?.role === 'teacher' ? '교사' : '학생'}</span><strong>{currentUser?.name ?? '사용자'}</strong><span className="avatar">{currentUser?.name?.[0] ?? '문'}</span></div>
       </header>
 
       <main className="main-content">
@@ -122,6 +157,26 @@ function App() {
         </section>
 
         <QuestionSetSelector questionSets={questionSets} selectedId={selectedSetId} onSelect={setSelectedSetId} />
+
+        <section className="user-switcher" aria-label="임시 사용자 선택">
+          <div>
+            <strong>임시 사용자</strong>
+            <p>{isStudent ? '학생은 문제를 풀고 최종 제출할 수 있어요.' : '교사는 현재 문제 세트를 검토하는 읽기 모드입니다.'}</p>
+          </div>
+          <div className="user-options">
+            {users.map((user) => (
+              <button
+                className={`user-chip ${currentUser?.id === user.id ? 'active' : ''}`}
+                key={user.id}
+                onClick={() => selectUser(user.id)}
+                type="button"
+              >
+                <span>{user.role === 'teacher' ? '교사' : '학생'}</span>
+                <strong>{user.name}</strong>
+              </button>
+            ))}
+          </div>
+        </section>
 
         {status === 'loading' && <div className="state-card"><span className="loader" />문제 세트 목록을 불러오고 있어요.</div>}
         {status === 'loading-set' && <div className="state-card"><span className="loader" />문제 세트를 준비하고 있어요.</div>}
@@ -148,6 +203,7 @@ function App() {
                 onPrevious={() => moveToQuestion(selectedIndex - 1)}
                 onNext={() => moveToQuestion(selectedIndex + 1)}
                 onResult={recordResult}
+                disabled={!isStudent}
               />
             </div>
           </div>
@@ -162,11 +218,12 @@ function App() {
                 총 {questions.length}문제 중 {solvedCount}문제를 풀었고, 현재 점수는 {totalScore}점입니다.
                 {submission && ` ${submission.attempt}차 제출로 저장되었습니다.`}
               </p>
+              {!isStudent && <p className="submission-error">교사 계정은 제출할 수 없습니다.</p>}
               {submissionError && <p className="submission-error">{submissionError}</p>}
             </div>
             <button
               className="submit-button final-submit"
-              disabled={submissionStatus === 'saving' || submissionStatus === 'saved'}
+              disabled={!isStudent || submissionStatus === 'saving' || submissionStatus === 'saved'}
               onClick={submitCurrentSet}
               type="button"
             >

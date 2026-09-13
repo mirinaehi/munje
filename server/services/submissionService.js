@@ -3,6 +3,7 @@ import { findQuestionsByIds } from '../repositories/questionRepository.js';
 import { findQuestionSetById } from '../repositories/questionSetRepository.js';
 import { findAllSubmissions, saveSubmission } from '../repositories/submissionRepository.js';
 import { isCorrectAnswer } from './questionService.js';
+import { getRequiredUser } from './userService.js';
 
 function getCorrectAnswer(question) {
   if (question.type === 'fill-blank') {
@@ -33,6 +34,16 @@ function getAttemptNumber(submissions, userId, questionSetId) {
 }
 
 export async function createSubmission({ userId = 'student-minseo', questionSetId, answers }) {
+  const user = await getRequiredUser(userId);
+
+  if (!user) {
+    return { error: { status: 404, message: '사용자를 찾을 수 없습니다.' } };
+  }
+
+  if (user.role !== 'student') {
+    return { error: { status: 403, message: '학생만 답안을 제출할 수 있습니다.' } };
+  }
+
   if (!questionSetId) {
     return { error: { status: 400, message: '문제 세트 ID가 필요합니다.' } };
   }

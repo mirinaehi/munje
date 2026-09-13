@@ -1,1 +1,14 @@
-[]
+[
+  {
+    "id": "student-minseo",
+    "name": "민서",
+    "email": "minseo@example.com",
+    "role": "student"
+  },
+  {
+    "id": "teacher-hyun",
+    "name": "현우",
+    "email": "hyun@example.com",
+    "role": "teacher"
+  }
+]
