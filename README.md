@@ -33,7 +33,7 @@
 
 ### 1.5 현재 개발 상태
 
-* 기획 단계
+* 1단계 — 프로젝트 기본 구조 완료
 
 ---
 
@@ -1004,6 +1004,19 @@ POST /api/submissions
 * Google 로그인
 * SQL 실행 환경
 * 코드 실행 환경
+
+## 10.6 로컬 실행
+
+프로젝트 루트에서 의존성을 설치하고 클라이언트와 서버를 함께 실행한다.
+
+```bash
+npm install
+npm run dev
+```
+
+* Frontend: `http://localhost:5173`
+* Backend API: `http://localhost:4000`
+* 연결 확인: `GET /api/health`
 
 ---
 

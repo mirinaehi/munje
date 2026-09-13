@@ -1,0 +1,151 @@
+:root {
+  font-family: Inter, Pretendard, "Noto Sans KR", system-ui, sans-serif;
+  color: #18202b;
+  background: #f4f7fb;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(91, 111, 230, 0.14), transparent 32%),
+    radial-gradient(circle at 85% 80%, rgba(52, 190, 142, 0.12), transparent 30%),
+    #f4f7fb;
+}
+
+.status-card {
+  width: min(100%, 560px);
+  padding: 48px;
+  border: 1px solid rgba(24, 32, 43, 0.08);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 24px 70px rgba(29, 43, 70, 0.12);
+  text-align: center;
+  backdrop-filter: blur(16px);
+}
+
+.logo {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  color: white;
+  background: #5465df;
+  font-size: 24px;
+  font-weight: 800;
+  box-shadow: 0 10px 24px rgba(84, 101, 223, 0.3);
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  color: #657083;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(30px, 7vw, 42px);
+  letter-spacing: -0.05em;
+}
+
+.description {
+  margin: 18px auto 30px;
+  max-width: 390px;
+  color: #657083;
+  line-height: 1.7;
+}
+
+.connection {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 50px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  background: #f0f3f8;
+  color: #596579;
+  font-weight: 700;
+}
+
+.status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #9aa3b2;
+}
+
+.connection.checking .status-dot {
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+.connection.connected {
+  color: #167451;
+  background: #e9f8f1;
+}
+
+.connection.connected .status-dot {
+  background: #28a976;
+  box-shadow: 0 0 0 5px rgba(40, 169, 118, 0.12);
+}
+
+.connection.error {
+  color: #a23b3b;
+  background: #fff0f0;
+}
+
+.connection.error .status-dot {
+  background: #d35e5e;
+}
+
+.stack {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.stack span {
+  padding: 7px 11px;
+  border: 1px solid #dde2ea;
+  border-radius: 999px;
+  color: #596579;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+@keyframes pulse {
+  50% { opacity: 0.35; }
+}
+
+@media (max-width: 520px) {
+  .status-card {
+    padding: 36px 22px;
+    border-radius: 22px;
+  }
+}
