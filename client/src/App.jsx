@@ -4,7 +4,14 @@ import Icon from './components/Icon.jsx';
 import QuestionList from './components/QuestionList.jsx';
 import QuestionPanel from './components/QuestionPanel.jsx';
 import QuestionSetSelector from './components/QuestionSetSelector.jsx';
+import TeacherQuestionManager from './components/TeacherQuestionManager.jsx';
 import { getCurrentUser, getQuestionSet, getQuestionSets, getUsers, submitQuestionSet } from './services/api.js';
+import {
+  createTeacherQuestion,
+  deleteTeacherQuestion,
+  getTeacherQuestions,
+  updateTeacherQuestion,
+} from './services/api.js';
 
 function App() {
   const [users, setUsers] = useState([]);
@@ -17,6 +24,9 @@ function App() {
   const [submission, setSubmission] = useState(null);
   const [submissionStatus, setSubmissionStatus] = useState('idle');
   const [submissionError, setSubmissionError] = useState('');
+  const [teacherQuestions, setTeacherQuestions] = useState([]);
+  const [teacherStatus, setTeacherStatus] = useState('idle');
+  const [teacherError, setTeacherError] = useState('');
   const [status, setStatus] = useState('loading');
   const [error, setError] = useState('');
 
@@ -58,6 +68,23 @@ function App() {
       });
   }, [selectedSetId]);
 
+  useEffect(() => {
+    if (currentUser?.role !== 'teacher') return;
+
+    setTeacherStatus('loading');
+    setTeacherError('');
+
+    getTeacherQuestions(currentUser.id)
+      .then((data) => {
+        setTeacherQuestions(data.questions);
+        setTeacherStatus('idle');
+      })
+      .catch((loadError) => {
+        setTeacherError(loadError.message);
+        setTeacherStatus('idle');
+      });
+  }, [currentUser]);
+
   const questions = currentSet?.questions ?? [];
   const contexts = currentSet?.contexts ?? [];
   const selectedIndex = questions.findIndex((question) => question.id === selectedId);
@@ -70,6 +97,7 @@ function App() {
   const totalScore = Object.values(results).reduce((sum, result) => sum + (result.correct ? result.score : 0), 0);
   const isComplete = questions.length > 0 && solvedCount === questions.length;
   const isStudent = currentUser?.role === 'student';
+  const isTeacher = currentUser?.role === 'teacher';
 
   function recordResult(result) {
     setResults((current) => ({ ...current, [result.questionId]: result }));
@@ -131,6 +159,55 @@ function App() {
     }
   }
 
+  async function reloadTeacherQuestions() {
+    if (!currentUser || !isTeacher) return;
+
+    const data = await getTeacherQuestions(currentUser.id);
+    setTeacherQuestions(data.questions);
+  }
+
+  async function createManagedQuestion(question) {
+    setTeacherStatus('saving');
+    setTeacherError('');
+
+    try {
+      await createTeacherQuestion(currentUser.id, question);
+      await reloadTeacherQuestions();
+      setTeacherStatus('idle');
+    } catch (saveError) {
+      setTeacherError(saveError.message);
+      setTeacherStatus('idle');
+    }
+  }
+
+  async function updateManagedQuestion(questionId, question) {
+    setTeacherStatus('saving');
+    setTeacherError('');
+
+    try {
+      await updateTeacherQuestion(currentUser.id, questionId, question);
+      await reloadTeacherQuestions();
+      setTeacherStatus('idle');
+    } catch (saveError) {
+      setTeacherError(saveError.message);
+      setTeacherStatus('idle');
+    }
+  }
+
+  async function deleteManagedQuestion(questionId) {
+    setTeacherStatus('saving');
+    setTeacherError('');
+
+    try {
+      await deleteTeacherQuestion(currentUser.id, questionId);
+      await reloadTeacherQuestions();
+      setTeacherStatus('idle');
+    } catch (deleteError) {
+      setTeacherError(deleteError.message);
+      setTeacherStatus('idle');
+    }
+  }
+
   return (
     <div className="app">
       <header className="topbar">
@@ -138,7 +215,7 @@ function App() {
           <span className="brand-mark">문</span>
           <span>문제</span>
         </a>
-        <div className="step-label"><span /> 7단계 · 사용자 역할</div>
+        <div className="step-label"><span /> 8단계 · 교사 관리</div>
         <div className="profile"><span>{currentUser?.role === 'teacher' ? '교사' : '학생'}</span><strong>{currentUser?.name ?? '사용자'}</strong><span className="avatar">{currentUser?.name?.[0] ?? '문'}</span></div>
       </header>
 
@@ -177,6 +254,17 @@ function App() {
             ))}
           </div>
         </section>
+
+        {isTeacher && (
+          <TeacherQuestionManager
+            questions={teacherQuestions}
+            status={teacherStatus}
+            error={teacherError}
+            onCreate={createManagedQuestion}
+            onUpdate={updateManagedQuestion}
+            onDelete={deleteManagedQuestion}
+          />
+        )}
 
         {status === 'loading' && <div className="state-card"><span className="loader" />문제 세트 목록을 불러오고 있어요.</div>}
         {status === 'loading-set' && <div className="state-card"><span className="loader" />문제 세트를 준비하고 있어요.</div>}

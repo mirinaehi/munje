@@ -6,6 +6,12 @@ import test from 'node:test';
 import { getQuestionSet, getQuestionSets } from './questionSetService.js';
 import { isCorrectAnswer, toPublicQuestion } from './questionService.js';
 import { createSubmission } from './submissionService.js';
+import {
+  createTeacherQuestion,
+  deleteTeacherQuestion,
+  getTeacherQuestions,
+  updateTeacherQuestion,
+} from './teacherQuestionService.js';
 import { getCurrentUser, getUsers } from './userService.js';
 
 const sampleQuestion = {
@@ -163,6 +169,53 @@ test('교사 계정은 문제 세트를 제출할 수 없다', async () => {
     answers: [
       { questionId: 'q016', answer: 1 },
     ],
+  });
+
+  assert.equal(result.error.status, 403);
+});
+
+test('교사는 문제를 생성, 수정, 삭제할 수 있다', async () => {
+  const temporaryDirectory = await mkdtemp(path.join(os.tmpdir(), 'munje-questions-'));
+  const questionsPath = path.join(temporaryDirectory, 'questions.json');
+  process.env.MUNJE_QUESTIONS_PATH = questionsPath;
+  await writeFile(questionsPath, '[]\n');
+
+  const created = await createTeacherQuestion('teacher-hyun', {
+    title: '테스트 객관식',
+    content: '정답은 몇 번인가요?',
+    choices: ['오답', '정답'],
+    answer: 1,
+    score: 3,
+    difficulty: 'easy',
+    unit: '테스트 단원',
+    explanation: '두 번째 보기가 정답입니다.',
+  });
+  const listed = await getTeacherQuestions('teacher-hyun');
+  const updated = await updateTeacherQuestion('teacher-hyun', created.question.id, {
+    ...created.question,
+    title: '수정된 객관식',
+    choices: ['오답', '정답', '오답 2'],
+    answer: 1,
+  });
+  const deleted = await deleteTeacherQuestion('teacher-hyun', created.question.id);
+  const savedQuestions = JSON.parse(await readFile(questionsPath, 'utf8'));
+
+  assert.equal(created.question.createdBy, 'teacher-hyun');
+  assert.equal(listed.questions.length, 1);
+  assert.equal(updated.question.title, '수정된 객관식');
+  assert.equal(deleted.deletedId, created.question.id);
+  assert.equal(savedQuestions.length, 0);
+
+  delete process.env.MUNJE_QUESTIONS_PATH;
+});
+
+test('학생은 문제를 관리할 수 없다', async () => {
+  const result = await createTeacherQuestion('student-minseo', {
+    title: '권한 없는 문제',
+    content: '학생은 만들 수 없습니다.',
+    choices: ['아니오', '예'],
+    answer: 0,
+    explanation: '학생 권한은 문제 관리가 제한됩니다.',
   });
 
   assert.equal(result.error.status, 403);
