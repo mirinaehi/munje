@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 
 const emptyQuestion = {
+  type: 'multiple-choice',
   title: '',
   content: '',
   unit: '',
@@ -21,6 +22,7 @@ const circledChoiceMap = new Map([
 
 function toFormQuestion(question) {
   return {
+    type: question.type ?? 'multiple-choice',
     title: question.title ?? '',
     content: question.content ?? '',
     unit: question.unit ?? '',
@@ -33,18 +35,29 @@ function toFormQuestion(question) {
 }
 
 function toPayload(formQuestion) {
-  const answer = formQuestion.answer === '' ? null : Number(formQuestion.answer);
-
-  return {
+  const type = formQuestion.type;
+  const answer = type === 'multiple-choice'
+    ? formQuestion.answer === '' ? null : Number(formQuestion.answer)
+    : String(formQuestion.answer ?? '').trim();
+  const choices = formQuestion.choicesText.split('\n').map((choice) => choice.trim()).filter(Boolean);
+  const payload = {
+    type,
     title: formQuestion.title,
     content: formQuestion.content,
     unit: formQuestion.unit,
     difficulty: formQuestion.difficulty,
     score: Number(formQuestion.score),
-    choices: formQuestion.choicesText.split('\n'),
     answer,
     explanation: formQuestion.explanation,
   };
+
+  if (type === 'multiple-choice') {
+    payload.choices = choices;
+  } else if (answer) {
+    payload.acceptedAnswers = [answer];
+  }
+
+  return payload;
 }
 
 function cleanBulkText(text) {
@@ -64,18 +77,53 @@ function findUnit(lines) {
   return heading?.replace(/^[ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩ]+\.\s+/, '').trim() || '가져오기와 내보내기';
 }
 
+function parseAnswerMap(source) {
+  const [, answerPart = ''] = source.split(/\n정답\n/);
+  const answerPattern = /(^|\n)(\d{1,3})\.\s*\n/g;
+  const matches = [...answerPart.matchAll(answerPattern)];
+
+  return new Map(matches.map((match, index) => {
+    const start = match.index + match[0].length;
+    const end = matches[index + 1]?.index ?? answerPart.length;
+    return [Number(match[2]), answerPart.slice(start, end).trim()];
+  }));
+}
+
+function titleFromContent(content) {
+  return content
+    .split('\n')
+    .map((line) => line.trim())
+    .find(Boolean)
+    ?.replace(/하시오\.$/, '')
+    .replace(/작성하시오\.$/, '작성')
+    .slice(0, 48) ?? '문제';
+}
+
+function detectSubjectiveType(content, answer) {
+  const joined = `${content}\n${answer}`;
+
+  if (/SQL|SELECT|INSERT|UPDATE|DELETE|CREATE|VIEW|JOIN|WHERE|GROUP BY|ORDER BY|HAVING/i.test(joined)) {
+    return 'sql';
+  }
+
+  return 'short-answer';
+}
+
 function parseBulkQuestions(text) {
   const source = cleanBulkText(text);
-  const questionPattern = /(^|\n)(\d{1,2})\.\s+([^\n]+)/g;
-  const matches = [...source.matchAll(questionPattern)];
+  const [questionPart] = source.split(/\n정답\n/);
+  const answerMap = parseAnswerMap(source);
+  const questionPattern = /(^|\n)(\d{1,3})\.\s*([^\n]*)/g;
+  const matches = [...questionPart.matchAll(questionPattern)];
 
   return matches.map((match, index) => {
     const start = match.index + match[1].length;
-    const end = matches[index + 1]?.index ?? source.length;
-    const previousText = source.slice(0, start);
-    const block = source.slice(start, end).trim();
+    const end = matches[index + 1]?.index ?? questionPart.length;
+    const previousText = questionPart.slice(0, start);
+    const block = questionPart.slice(start, end).trim();
     const blockLines = block.split('\n').map((line) => line.trim()).filter(Boolean);
-    const title = blockLines[0].replace(/^\d{1,2}\.\s+/, '').trim();
+    const questionNumber = Number(match[2]);
+    const rawTitle = blockLines[0].replace(/^\d{1,3}\.\s*/, '').trim();
     const choices = [];
     const contentLines = [];
 
@@ -88,22 +136,33 @@ function parseBulkQuestions(text) {
         contentLines.push(line);
       }
     }
+    const content = contentLines.join('\n').trim() || rawTitle;
+    const answer = answerMap.get(questionNumber) ?? null;
+    const type = choices.length >= 2 ? 'multiple-choice' : detectSubjectiveType(content, answer ?? '');
 
     return {
-      title,
-      content: contentLines.join('\n').trim() || title,
+      type,
+      title: rawTitle || titleFromContent(content),
+      content,
       unit: findUnit(previousText.split('\n')),
       difficulty: 'medium',
-      score: 5,
+      score: type === 'multiple-choice' ? 5 : 10,
       choices,
-      answer: null,
-      explanation: '정답과 해설을 검토한 뒤 수정하세요.',
+      answer: type === 'multiple-choice' ? null : answer,
+      acceptedAnswers: type === 'multiple-choice' || !answer ? undefined : [answer],
+      explanation: type === 'multiple-choice' ? '정답과 해설을 검토한 뒤 수정하세요.' : '제시된 조건을 만족하는 정답 예시입니다.',
     };
-  }).filter((question) => question.title && question.choices.length >= 2);
+  }).filter((question) => question.title && (question.choices.length >= 2 || question.answer));
 }
 
 function isAnswerUndecided(question) {
   return question.answer === null || question.answer === undefined || question.answer === '';
+}
+
+function formatQuestionType(type) {
+  if (type === 'sql') return 'SQL';
+  if (type === 'short-answer') return '주관식';
+  return '객관식';
 }
 
 export default function TeacherQuestionManager({
@@ -147,7 +206,7 @@ export default function TeacherQuestionManager({
     const parsedQuestions = parseBulkQuestions(bulkText);
 
     if (parsedQuestions.length === 0) {
-      setBulkError('문제를 찾지 못했습니다. 번호와 ①②③ 형식의 보기가 있는지 확인하세요.');
+      setBulkError('문제를 찾지 못했습니다. 번호가 붙은 문제와 정답 섹션을 확인하세요.');
       setBulkQuestions([]);
       return;
     }
@@ -199,7 +258,7 @@ export default function TeacherQuestionManager({
         <div>
           <p className="eyebrow">TEACHER TOOLS</p>
           <h2>문제 관리</h2>
-          <p>객관식 문제를 만들고 수정한 뒤 학생 풀이 흐름에 반영할 수 있어요.</p>
+          <p>객관식, 주관식, SQL 문제를 만들고 수정한 뒤 학생 풀이 흐름에 반영할 수 있어요.</p>
         </div>
         <button className="nav-button" onClick={resetForm} type="button">새 문제</button>
       </div>
@@ -218,7 +277,7 @@ export default function TeacherQuestionManager({
           <span>원문</span>
           <textarea
             className="bulk-textarea"
-            placeholder="번호가 붙은 객관식 문제 묶음을 그대로 붙여넣으세요."
+            placeholder="번호가 붙은 문제와 정답 묶음을 그대로 붙여넣으세요. 객관식은 ①②③ 보기, SQL/주관식은 정답 섹션을 기준으로 변환됩니다."
             value={bulkText}
             onChange={(event) => setBulkText(event.target.value)}
           />
@@ -230,10 +289,17 @@ export default function TeacherQuestionManager({
               <article className="bulk-preview-item" key={`${question.title}-${index}`}>
                 <button onClick={() => loadBulkQuestion(question)} type="button">
                   <strong>{index + 1}. {question.title}</strong>
-                  <span>{question.unit} · 보기 {question.choices.length}개</span>
+                  <span>
+                    {question.unit} · {formatQuestionType(question.type)}
+                    {question.type === 'multiple-choice' ? ` · 보기 ${question.choices.length}개` : ''}
+                  </span>
                 </button>
                 <span className={isAnswerUndecided(question) ? 'answer-status undecided' : 'answer-status decided'}>
-                  {isAnswerUndecided(question) ? '정답 미정' : `정답 ${question.answer + 1}번`}
+                  {isAnswerUndecided(question)
+                    ? '정답 미정'
+                    : question.type === 'multiple-choice'
+                      ? `정답 ${question.answer + 1}번`
+                      : '정답 있음'}
                 </span>
               </article>
             ))}
@@ -275,6 +341,15 @@ export default function TeacherQuestionManager({
           </div>
 
           <label className="answer-field">
+            <span>문제 유형</span>
+            <select value={formQuestion.type} onChange={(event) => updateField('type', event.target.value)}>
+              <option value="multiple-choice">객관식</option>
+              <option value="short-answer">주관식</option>
+              <option value="sql">SQL</option>
+            </select>
+          </label>
+
+          <label className="answer-field">
             <span>제목</span>
             <input value={formQuestion.title} onChange={(event) => updateField('title', event.target.value)} />
           </label>
@@ -303,20 +378,29 @@ export default function TeacherQuestionManager({
             </label>
           </div>
 
-          <label className="answer-field">
-            <span>보기 목록</span>
-            <textarea value={formQuestion.choicesText} onChange={(event) => updateField('choicesText', event.target.value)} />
-          </label>
+          {formQuestion.type === 'multiple-choice' ? (
+            <>
+              <label className="answer-field">
+                <span>보기 목록</span>
+                <textarea value={formQuestion.choicesText} onChange={(event) => updateField('choicesText', event.target.value)} />
+              </label>
 
-          <label className="answer-field">
-            <span>정답 번호</span>
-            <select value={formQuestion.answer} onChange={(event) => updateField('answer', event.target.value)}>
-              <option value="">미정</option>
-              {formQuestion.choicesText.split('\n').filter((choice) => choice.trim()).map((choice, index) => (
-                <option key={`${choice}-${index}`} value={index}>{index + 1}번</option>
-              ))}
-            </select>
-          </label>
+              <label className="answer-field">
+                <span>정답 번호</span>
+                <select value={formQuestion.answer} onChange={(event) => updateField('answer', event.target.value)}>
+                  <option value="">미정</option>
+                  {formQuestion.choicesText.split('\n').filter((choice) => choice.trim()).map((choice, index) => (
+                    <option key={`${choice}-${index}`} value={index}>{index + 1}번</option>
+                  ))}
+                </select>
+              </label>
+            </>
+          ) : (
+            <label className="answer-field">
+              <span>{formQuestion.type === 'sql' ? '정답 SQL' : '정답 예시'}</span>
+              <textarea value={formQuestion.answer} onChange={(event) => updateField('answer', event.target.value)} />
+            </label>
+          )}
 
           <label className="answer-field">
             <span>해설</span>

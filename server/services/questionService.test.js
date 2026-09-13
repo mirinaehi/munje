@@ -231,6 +231,32 @@ test('교사는 문제를 생성, 수정, 삭제할 수 있다', async () => {
   delete process.env.MUNJE_QUESTIONS_PATH;
 });
 
+test('교사는 SQL 주관식 문제를 생성할 수 있다', async () => {
+  const temporaryDirectory = await mkdtemp(path.join(os.tmpdir(), 'munje-sql-questions-'));
+  const questionsPath = path.join(temporaryDirectory, 'questions.json');
+  process.env.MUNJE_QUESTIONS_PATH = questionsPath;
+  await writeFile(questionsPath, '[]\n');
+
+  const created = await createTeacherQuestion('teacher-hyun', {
+    type: 'sql',
+    title: '가격 조건 조회',
+    content: '도서 테이블에서 가격이 15000원 이상인 책의 제목과 가격을 조회하시오.',
+    answer: 'SELECT 제목, 가격 FROM 도서 WHERE 가격 >= 15000;',
+    score: 10,
+    difficulty: 'medium',
+    unit: 'SQL SELECT',
+    explanation: 'WHERE 절로 가격 조건을 지정합니다.',
+  });
+  const savedQuestions = JSON.parse(await readFile(questionsPath, 'utf8'));
+
+  assert.equal(created.question.type, 'sql');
+  assert.equal(created.question.choices, undefined);
+  assert.deepEqual(created.question.acceptedAnswers, ['SELECT 제목, 가격 FROM 도서 WHERE 가격 >= 15000;']);
+  assert.equal(savedQuestions.length, 1);
+
+  delete process.env.MUNJE_QUESTIONS_PATH;
+});
+
 test('학생은 문제를 관리할 수 없다', async () => {
   const result = await createTeacherQuestion('student-minseo', {
     title: '권한 없는 문제',
