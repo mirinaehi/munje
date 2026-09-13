@@ -158,8 +158,11 @@ button, label { -webkit-tap-highlight-color: transparent; }
 
 .complete-card { display: flex; align-items: center; gap: 14px; margin-top: 20px; padding: 18px 20px; border: 1px solid #c8e2d5; border-radius: 16px; color: #155f48; background: #edf8f2; }
 .complete-card svg { width: 38px; height: 38px; padding: 8px; border-radius: 12px; background: rgba(255, 255, 255, .78); }
+.complete-card > div { flex: 1; min-width: 0; }
 .complete-card strong { font-size: 15px; }
 .complete-card p { margin: 4px 0 0; font-size: 13px; }
+.complete-card .submission-error { color: #9c452f; font-weight: 700; }
+.final-submit { flex: 0 0 auto; }
 
 .state-card { min-height: 280px; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 30px; border: 1px solid var(--line); border-radius: 22px; background: white; color: var(--muted); }
 .state-card.error-state { flex-direction: column; color: #a54838; }
@@ -197,4 +200,5 @@ footer { display: flex; align-items: center; justify-content: center; gap: 7px; 
   .submit-row { align-items: stretch; flex-direction: column; }
   .action-group { display: grid; grid-template-columns: 1fr; }
   .submit-button, .nav-button { width: 100%; }
+  .complete-card { align-items: stretch; flex-direction: column; }
 }

@@ -52,3 +52,13 @@ export async function submitAnswer(questionId, answer) {
 
   return parseResponse(response);
 }
+
+export async function submitQuestionSet({ userId, questionSetId, answers }) {
+  const response = await fetch(apiUrl('/api/submissions'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId, questionSetId, answers }),
+  });
+
+  return parseResponse(response);
+}

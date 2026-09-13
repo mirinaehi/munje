@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
+import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 import test from 'node:test';
 import { getQuestionSet, getQuestionSets } from './questionSetService.js';
 import { isCorrectAnswer, toPublicQuestion } from './questionService.js';
+import { createSubmission } from './submissionService.js';
 
 const sampleQuestion = {
   id: 'q001',
@@ -109,4 +113,34 @@ test('데이터베이스 구조 지문을 SQL 세트에 제공한다', async () 
 
   assert.equal(questionSet.contexts[0].type, 'database-schema');
   assert.equal(questionSet.contexts[0].tables.length, 3);
+});
+
+test('문제 세트 제출을 채점하고 JSON 파일에 저장한다', async () => {
+  const temporaryDirectory = await mkdtemp(path.join(os.tmpdir(), 'munje-submissions-'));
+  const submissionsPath = path.join(temporaryDirectory, 'submissions.json');
+  process.env.MUNJE_SUBMISSIONS_PATH = submissionsPath;
+  await writeFile(submissionsPath, '[]\n');
+
+  const result = await createSubmission({
+    userId: 'student-test',
+    questionSetId: 'set-js-object-basics',
+    answers: [
+      { questionId: 'q016', answer: 1 },
+      { questionId: 'q017', answer: 4 },
+      { questionId: 'q018', answer: 3 },
+      { questionId: 'q019', answer: 'Jin' },
+      { questionId: 'q020', answer: { fallback: 'DEFAULT_USER_PROFILE' } },
+    ],
+  });
+
+  const savedSubmissions = JSON.parse(await readFile(submissionsPath, 'utf8'));
+
+  assert.equal(result.submission.userId, 'student-test');
+  assert.equal(result.submission.attempt, 1);
+  assert.equal(result.submission.answers.length, 5);
+  assert.equal(result.submission.score, 25);
+  assert.equal(savedSubmissions.length, 1);
+  assert.equal(savedSubmissions[0].id, result.submission.id);
+
+  delete process.env.MUNJE_SUBMISSIONS_PATH;
 });

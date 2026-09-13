@@ -4,7 +4,7 @@ import Icon from './components/Icon.jsx';
 import QuestionList from './components/QuestionList.jsx';
 import QuestionPanel from './components/QuestionPanel.jsx';
 import QuestionSetSelector from './components/QuestionSetSelector.jsx';
-import { getQuestionSet, getQuestionSets } from './services/api.js';
+import { getQuestionSet, getQuestionSets, submitQuestionSet } from './services/api.js';
 
 function App() {
   const [questionSets, setQuestionSets] = useState([]);
@@ -12,6 +12,9 @@ function App() {
   const [currentSet, setCurrentSet] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
   const [results, setResults] = useState({});
+  const [submission, setSubmission] = useState(null);
+  const [submissionStatus, setSubmissionStatus] = useState('idle');
+  const [submissionError, setSubmissionError] = useState('');
   const [status, setStatus] = useState('loading');
   const [error, setError] = useState('');
 
@@ -37,6 +40,9 @@ function App() {
         setCurrentSet(data);
         setSelectedId(data.questions[0]?.id ?? null);
         setResults({});
+        setSubmission(null);
+        setSubmissionStatus('idle');
+        setSubmissionError('');
         setStatus('ready');
       })
       .catch((loadError) => {
@@ -66,6 +72,30 @@ function App() {
     if (nextQuestion) setSelectedId(nextQuestion.id);
   }
 
+  async function submitCurrentSet() {
+    if (!currentSet || !isComplete || submissionStatus === 'saving') return;
+
+    setSubmissionStatus('saving');
+    setSubmissionError('');
+
+    try {
+      const savedSubmission = await submitQuestionSet({
+        userId: 'student-minseo',
+        questionSetId: currentSet.id,
+        answers: questions.map((question) => ({
+          questionId: question.id,
+          answer: results[question.id].submittedAnswer,
+        })),
+      });
+
+      setSubmission(savedSubmission);
+      setSubmissionStatus('saved');
+    } catch (submitError) {
+      setSubmissionError(submitError.message);
+      setSubmissionStatus('error');
+    }
+  }
+
   return (
     <div className="app">
       <header className="topbar">
@@ -73,7 +103,7 @@ function App() {
           <span className="brand-mark">문</span>
           <span>문제</span>
         </a>
-        <div className="step-label"><span /> 5단계 · 공통 지문</div>
+        <div className="step-label"><span /> 6단계 · 제출 저장</div>
         <div className="profile"><span>학생</span><strong>민서</strong><span className="avatar">민</span></div>
       </header>
 
@@ -127,9 +157,21 @@ function App() {
           <section className="complete-card" aria-live="polite">
             <Icon name="check" size={22} />
             <div>
-              <strong>세트 풀이 완료</strong>
-              <p>총 {questions.length}문제 중 {solvedCount}문제를 풀었고, 현재 점수는 {totalScore}점입니다.</p>
+              <strong>{submission ? '제출 기록 저장 완료' : '세트 풀이 완료'}</strong>
+              <p>
+                총 {questions.length}문제 중 {solvedCount}문제를 풀었고, 현재 점수는 {totalScore}점입니다.
+                {submission && ` ${submission.attempt}차 제출로 저장되었습니다.`}
+              </p>
+              {submissionError && <p className="submission-error">{submissionError}</p>}
             </div>
+            <button
+              className="submit-button final-submit"
+              disabled={submissionStatus === 'saving' || submissionStatus === 'saved'}
+              onClick={submitCurrentSet}
+              type="button"
+            >
+              {submissionStatus === 'saving' ? '저장 중...' : submissionStatus === 'saved' ? '저장 완료' : '최종 제출'}
+            </button>
           </section>
         )}
       </main>
