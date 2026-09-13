@@ -14,5 +14,13 @@
     "questions": ["q021"],
     "isPublished": true,
     "createdBy": "teacher001"
+  },
+  {
+    "id": "set-learning-flow",
+    "title": "문제 풀이 흐름 이해",
+    "description": "짧은 글을 읽고 문제 풀이 플랫폼의 기본 흐름을 확인합니다.",
+    "questions": ["q022"],
+    "isPublished": true,
+    "createdBy": "teacher001"
   }
 ]

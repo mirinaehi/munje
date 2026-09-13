@@ -1,6 +1,7 @@
 [
   {
     "id": "q016",
+    "contextId": "context-js-user-profiles",
     "type": "multiple-choice",
     "title": "객체의 데이터 구조",
     "content": "USER_PROFILES의 데이터 구조에 대한 설명으로 옳은 것은?",
@@ -19,6 +20,7 @@
   },
   {
     "id": "q017",
+    "contextId": "context-js-user-profiles",
     "type": "multiple-choice",
     "title": "객체 속성 접근",
     "content": "DEFAULT_USER_PROFILE이 가리키는 값은 무엇인가요?",
@@ -38,6 +40,7 @@
   },
   {
     "id": "q018",
+    "contextId": "context-js-user-profiles",
     "type": "multiple-choice",
     "title": "Object.values 이해",
     "content": "다음 코드로 만들어지는 userProfiles에 대한 설명으로 옳은 것은?",
@@ -57,6 +60,7 @@
   },
   {
     "id": "q019",
+    "contextId": "context-js-user-profiles",
     "type": "short-answer",
     "title": "기본 프로필 이름",
     "content": "DEFAULT_USER_PROFILE의 name 값은 무엇인가요?",
@@ -70,6 +74,7 @@
   },
   {
     "id": "q020",
+    "contextId": "context-js-user-profiles",
     "type": "fill-blank",
     "title": "기본값 반환 이해",
     "content": "resolveUserProfile 함수는 전달받은 profileId가 USER_PROFILES에 없을 때 빈칸의 값을 반환합니다.",
@@ -88,6 +93,7 @@
   },
   {
     "id": "q021",
+    "contextId": "context-library-schema",
     "type": "sql",
     "title": "가격 조건 SELECT",
     "content": "도서 테이블에서 가격이 15,000원 이상인 책의 제목과 가격을 조회하는 SQL을 작성하세요.",
@@ -100,5 +106,23 @@
     "difficulty": "medium",
     "unit": "SQL SELECT",
     "explanation": "SELECT 절에는 제목과 가격을 두고, WHERE 절에서 가격이 15000 이상인 행만 남깁니다."
+  },
+  {
+    "id": "q022",
+    "contextId": "context-learning-flow",
+    "type": "multiple-choice",
+    "title": "풀이 흐름 순서",
+    "content": "공통 지문에 설명된 문제 풀이 흐름으로 가장 알맞은 것은?",
+    "choices": [
+      "채점 → 답안 작성 → 문제 확인 → 제출",
+      "문제 확인 → 답안 작성 → 제출 → 채점 → 결과 확인",
+      "결과 확인 → 문제 확인 → 제출 → 답안 작성",
+      "제출 → 문제 확인 → 채점 → 답안 작성"
+    ],
+    "answer": 1,
+    "score": 5,
+    "difficulty": "easy",
+    "unit": "학습 흐름",
+    "explanation": "학생은 문제를 확인하고 답안을 작성한 뒤 제출하며, 서버 채점 후 결과와 해설을 확인합니다."
   }
 ]

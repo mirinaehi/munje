@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import ContextPanel from './components/ContextPanel.jsx';
 import Icon from './components/Icon.jsx';
 import QuestionList from './components/QuestionList.jsx';
 import QuestionPanel from './components/QuestionPanel.jsx';
@@ -45,8 +46,13 @@ function App() {
   }, [selectedSetId]);
 
   const questions = currentSet?.questions ?? [];
+  const contexts = currentSet?.contexts ?? [];
   const selectedIndex = questions.findIndex((question) => question.id === selectedId);
   const selectedQuestion = useMemo(() => questions[selectedIndex] ?? null, [questions, selectedIndex]);
+  const selectedContext = useMemo(
+    () => contexts.find((context) => context.id === selectedQuestion?.contextId) ?? null,
+    [contexts, selectedQuestion],
+  );
   const solvedCount = Object.keys(results).length;
   const totalScore = Object.values(results).reduce((sum, result) => sum + (result.correct ? result.score : 0), 0);
   const isComplete = questions.length > 0 && solvedCount === questions.length;
@@ -67,7 +73,7 @@ function App() {
           <span className="brand-mark">문</span>
           <span>문제</span>
         </a>
-        <div className="step-label"><span /> 4단계 · 다양한 문제 유형</div>
+        <div className="step-label"><span /> 5단계 · 공통 지문</div>
         <div className="profile"><span>학생</span><strong>민서</strong><span className="avatar">민</span></div>
       </header>
 
@@ -100,17 +106,20 @@ function App() {
               selectedId={selectedId}
               onSelect={setSelectedId}
             />
-            <QuestionPanel
-              key={selectedQuestion.id}
-              question={selectedQuestion}
-              result={results[selectedQuestion.id]}
-              positionLabel={`${selectedIndex + 1} / ${questions.length}`}
-              hasPrevious={selectedIndex > 0}
-              hasNext={selectedIndex < questions.length - 1}
-              onPrevious={() => moveToQuestion(selectedIndex - 1)}
-              onNext={() => moveToQuestion(selectedIndex + 1)}
-              onResult={recordResult}
-            />
+            <div className="study-area">
+              <ContextPanel context={selectedContext} />
+              <QuestionPanel
+                key={selectedQuestion.id}
+                question={selectedQuestion}
+                result={results[selectedQuestion.id]}
+                positionLabel={`${selectedIndex + 1} / ${questions.length}`}
+                hasPrevious={selectedIndex > 0}
+                hasNext={selectedIndex < questions.length - 1}
+                onPrevious={() => moveToQuestion(selectedIndex - 1)}
+                onNext={() => moveToQuestion(selectedIndex + 1)}
+                onResult={recordResult}
+              />
+            </div>
           </div>
         )}
 

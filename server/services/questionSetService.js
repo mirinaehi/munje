@@ -1,3 +1,4 @@
+import { findContextsByIds } from '../repositories/contextRepository.js';
 import { findQuestionsByIds } from '../repositories/questionRepository.js';
 import { findAllQuestionSets, findQuestionSetById } from '../repositories/questionSetRepository.js';
 import { toPublicQuestion } from './questionService.js';
@@ -24,10 +25,13 @@ export async function getQuestionSet(id) {
 
   const questions = await findQuestionsByIds(questionSet.questions);
   const publicQuestions = questions.map(toPublicQuestion);
+  const contextIds = [...new Set(publicQuestions.map((question) => question.contextId).filter(Boolean))];
+  const contexts = await findContextsByIds(contextIds);
 
   return {
     ...toQuestionSetSummary(questionSet),
     totalScore: publicQuestions.reduce((sum, question) => sum + question.score, 0),
+    contexts,
     questions: publicQuestions,
   };
 }

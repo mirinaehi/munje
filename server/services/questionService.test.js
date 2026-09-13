@@ -81,7 +81,7 @@ test('SQL 답안을 기본 정규화 후 채점한다', () => {
 test('공개된 문제 세트 목록을 요약해서 제공한다', async () => {
   const questionSets = await getQuestionSets();
 
-  assert.equal(questionSets.length, 2);
+  assert.equal(questionSets.length, 3);
   assert.equal(questionSets[0].id, 'set-js-object-basics');
   assert.equal(questionSets[0].questionCount, 5);
 });
@@ -94,4 +94,19 @@ test('문제 세트의 문제를 지정된 순서대로 제공한다', async () 
   assert.equal('answer' in questionSet.questions[0], false);
   assert.equal('acceptedAnswers' in questionSet.questions[3], false);
   assert.equal('answers' in questionSet.questions[4].blanks[0], false);
+});
+
+test('문제 세트의 공통 지문을 중복 없이 제공한다', async () => {
+  const questionSet = await getQuestionSet('set-js-object-basics');
+
+  assert.equal(questionSet.contexts.length, 1);
+  assert.equal(questionSet.contexts[0].id, 'context-js-user-profiles');
+  assert.equal(questionSet.questions.every((question) => question.contextId === 'context-js-user-profiles'), true);
+});
+
+test('데이터베이스 구조 지문을 SQL 세트에 제공한다', async () => {
+  const questionSet = await getQuestionSet('set-sql-select-basics');
+
+  assert.equal(questionSet.contexts[0].type, 'database-schema');
+  assert.equal(questionSet.contexts[0].tables.length, 3);
 });
