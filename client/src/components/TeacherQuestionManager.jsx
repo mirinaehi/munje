@@ -20,6 +20,14 @@ const circledChoiceMap = new Map([
   ['⑤', 4],
 ]);
 
+const numericChoiceMap = new Map([
+  ['1', 0],
+  ['2', 1],
+  ['3', 2],
+  ['4', 3],
+  ['5', 4],
+]);
+
 function toFormQuestion(question) {
   return {
     type: question.type ?? 'multiple-choice',
@@ -77,16 +85,59 @@ function findUnit(lines) {
   return heading?.replace(/^[ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩ]+\.\s+/, '').trim() || '가져오기와 내보내기';
 }
 
+function splitQuestionAndAnswerParts(source) {
+  const match = source.match(/\n정답(?:\s*및\s*해설)?\n/);
+
+  if (!match) return [source, ''];
+
+  return [
+    source.slice(0, match.index),
+    source.slice(match.index + match[0].length),
+  ];
+}
+
+function parseAnswerValue(value) {
+  const trimmedValue = String(value ?? '').trim();
+
+  if (circledChoiceMap.has(trimmedValue)) return circledChoiceMap.get(trimmedValue);
+  if (numericChoiceMap.has(trimmedValue)) return numericChoiceMap.get(trimmedValue);
+
+  return trimmedValue;
+}
+
 function parseAnswerMap(source) {
-  const [, answerPart = ''] = source.split(/\n정답\n/);
+  const [, answerPart = ''] = splitQuestionAndAnswerParts(source);
   const answerPattern = /(^|\n)(\d{1,3})\.\s*\n/g;
   const matches = [...answerPart.matchAll(answerPattern)];
 
-  return new Map(matches.map((match, index) => {
-    const start = match.index + match[0].length;
-    const end = matches[index + 1]?.index ?? answerPart.length;
-    return [Number(match[2]), answerPart.slice(start, end).trim()];
-  }));
+  if (matches.length > 0) {
+    return new Map(matches.map((match, index) => {
+      const start = match.index + match[0].length;
+      const end = matches[index + 1]?.index ?? answerPart.length;
+      const answer = answerPart.slice(start, end).trim();
+
+      return [Number(match[2]), {
+        answer: parseAnswerValue(answer),
+        explanation: '',
+      }];
+    }));
+  }
+
+  const tableAnswerMap = new Map();
+
+  for (const line of answerPart.split('\n')) {
+    const trimmedLine = line.trim();
+    const match = trimmedLine.match(/^(\d{1,3})\s+([①②③④⑤1-5])\s+(.+)$/);
+
+    if (!match) continue;
+
+    tableAnswerMap.set(Number(match[1]), {
+      answer: parseAnswerValue(match[2]),
+      explanation: match[3].trim(),
+    });
+  }
+
+  return tableAnswerMap;
 }
 
 function titleFromContent(content) {
@@ -111,7 +162,7 @@ function detectSubjectiveType(content, answer) {
 
 function parseBulkQuestions(text) {
   const source = cleanBulkText(text);
-  const [questionPart] = source.split(/\n정답\n/);
+  const [questionPart] = splitQuestionAndAnswerParts(source);
   const answerMap = parseAnswerMap(source);
   const questionPattern = /(^|\n)(\d{1,3})\.\s*([^\n]*)/g;
   const matches = [...questionPart.matchAll(questionPattern)];
@@ -137,7 +188,9 @@ function parseBulkQuestions(text) {
       }
     }
     const content = contentLines.join('\n').trim() || rawTitle;
-    const answer = answerMap.get(questionNumber) ?? null;
+    const answerEntry = answerMap.get(questionNumber);
+    const answer = answerEntry?.answer ?? null;
+    const explanation = answerEntry?.explanation ?? '';
     const type = choices.length >= 2 ? 'multiple-choice' : detectSubjectiveType(content, answer ?? '');
 
     return {
@@ -148,9 +201,9 @@ function parseBulkQuestions(text) {
       difficulty: 'medium',
       score: type === 'multiple-choice' ? 5 : 10,
       choices,
-      answer: type === 'multiple-choice' ? null : answer,
+      answer: type === 'multiple-choice' ? Number.isInteger(answer) ? answer : null : answer,
       acceptedAnswers: type === 'multiple-choice' || !answer ? undefined : [answer],
-      explanation: type === 'multiple-choice' ? '정답과 해설을 검토한 뒤 수정하세요.' : '제시된 조건을 만족하는 정답 예시입니다.',
+      explanation: explanation || (type === 'multiple-choice' ? '정답과 해설을 검토한 뒤 수정하세요.' : '제시된 조건을 만족하는 정답 예시입니다.'),
     };
   }).filter((question) => question.title && (question.choices.length >= 2 || question.answer));
 }
