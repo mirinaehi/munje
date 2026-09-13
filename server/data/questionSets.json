@@ -71,5 +71,41 @@
     ],
     "isPublished": true,
     "createdBy": "teacher-hyun"
+  },
+  {
+    "id": "set-0cf36c38-f665-49d1-9470-0406d76d0e5e",
+    "title": "트랜잭션",
+    "description": "트랜잭션",
+    "questions": [
+      "q-fc1976b5-ec61-416e-bf88-1dad0b37e0b5",
+      "q-262bc50f-0d79-4350-ba62-5cf4afaa5b26",
+      "q-14a786fc-408d-4bbc-8b60-011152b137ca",
+      "q-bcc3ce32-7760-45ce-b06c-61c8ca82d238",
+      "q-3823e709-0fc1-4eb7-86a4-ba4c94251131",
+      "q-09f2444d-ce2a-4fb4-be61-0f1f2232e74b",
+      "q-61d63b6e-fc07-4f02-a36d-b0246c31afbc",
+      "q-b5f89cb9-3fd3-4536-b01f-ff3d30533f1a",
+      "q-ff0b7930-73fa-4dfa-8eec-ddca28bb7ad2",
+      "q-7efc43ad-e1aa-4f52-a92a-31fcaccf9d4e",
+      "q-68fba104-4245-4b5e-b2ad-66e97a6df0d1",
+      "q-04cd28dc-b53a-488a-bae0-ed2b08ea03b6",
+      "q-f95f1232-e466-4081-a963-bd4819f1672d",
+      "q-bbc2eb33-6022-4b5c-973e-7fc0e62c13c2",
+      "q-e64812dc-6bef-4e5d-b3d3-c798c49ebd11",
+      "q-0e9a9060-c2a5-4d84-b93b-f567a0713952",
+      "q-f0b16cb1-9860-41a9-890d-733c8df0414d",
+      "q-af994175-684f-461b-a34d-016790a58e71",
+      "q-ce9e6565-5aad-4acb-a288-f79d4839538e",
+      "q-8d6a806c-5d11-4601-82a0-a33d1af1017d",
+      "q-45214c9d-0f4e-4626-bed3-ee9178d8685e",
+      "q-322a134e-bbf0-4aeb-92cf-8179a1298477",
+      "q-8e39c90a-6273-4222-bbd0-0c0324849760",
+      "q-4ff956fc-b50c-4eaf-b948-f0ac95dd4e94",
+      "q-b702f3a6-b89f-4d89-a7ac-9bd74891e44d"
+    ],
+    "isPublished": true,
+    "createdBy": "teacher-hyun",
+    "updatedAt": "2026-09-13T06:44:24.026Z",
+    "createdAt": "2026-09-13T06:44:24.026Z"
   }
 ]
