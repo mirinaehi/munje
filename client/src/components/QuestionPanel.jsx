@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { submitAnswer } from '../services/api.js';
+import CodeBlock from './CodeBlock.jsx';
 import Icon from './Icon.jsx';
 
 export default function QuestionPanel({
@@ -51,7 +52,7 @@ export default function QuestionPanel({
 
       <form onSubmit={handleSubmit}>
         <p className="question-content">{question.content}</p>
-        {question.code && <pre className="code-block"><code>{question.code}</code></pre>}
+        {question.code && <CodeBlock className="code-block">{question.code}</CodeBlock>}
 
         <AnswerInput
           answer={answer}

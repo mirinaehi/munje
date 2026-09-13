@@ -1,3 +1,5 @@
+import CodeBlock from './CodeBlock.jsx';
+
 export default function ContextPanel({ context }) {
   if (!context) return null;
 
@@ -14,7 +16,7 @@ export default function ContextPanel({ context }) {
 
 function ContextBody({ context }) {
   if (context.type === 'code') {
-    return <pre className="context-code"><code>{context.content}</code></pre>;
+    return <CodeBlock className="context-code" language={context.language}>{context.content}</CodeBlock>;
   }
 
   if (context.type === 'database-schema') {
