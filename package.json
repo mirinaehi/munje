@@ -10,6 +10,9 @@
     "start": "npm run start --workspace server",
     "test": "npm run test --workspace server"
   },
+  "allowScripts": {
+    "esbuild": true
+  },
   "devDependencies": {
     "concurrently": "^9.2.1"
   }
