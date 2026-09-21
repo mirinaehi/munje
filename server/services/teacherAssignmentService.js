@@ -70,7 +70,9 @@ export async function updateTeacherAssignment(userId, studentId, questionSetIds)
   const nextAssignment = { userId: studentId, questionSetIds: nextQuestionSetIds };
   const nextAssignments = assignmentIndex === -1
     ? [...assignments, nextAssignment]
-    : assignments.with(assignmentIndex, nextAssignment);
+    : assignments.map((currentAssignment, index) => (
+      index === assignmentIndex ? nextAssignment : currentAssignment
+    ));
 
   await saveAllAssignments(nextAssignments);
 

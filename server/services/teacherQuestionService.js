@@ -133,7 +133,9 @@ export async function updateTeacherQuestion(userId, questionId, input) {
     return { error: { status: 400, message: validationMessage } };
   }
 
-  const nextQuestions = questions.with(questionIndex, question);
+  const nextQuestions = questions.map((currentQuestion, index) => (
+    index === questionIndex ? question : currentQuestion
+  ));
   await saveAllQuestions(nextQuestions);
 
   return { question };
